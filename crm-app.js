@@ -1,5 +1,10 @@
 // ...existing code...
 
+/**
+ * Banking CRM Application - Main JavaScript Module
+ * Handles customer management, search, and CRM functionality
+ */
+
 // Unique logging prefix for easy console filtering
 const LOG_PREFIX = '[BANKING-CRM]';
 
@@ -21,21 +26,18 @@ const Logger = {
         const timestamp = new Date().toISOString();
         console.log(`${LOG_PREFIX}[DEBUG][${key}] ${timestamp} - ${message}`, data || '');
     },
-    webex: (key, event, data = null) => {
-        const timestamp = new Date().toISOString();
-        console.log(`${LOG_PREFIX}[WEBEX][${key}] ${timestamp} - ${event}`, data || '');
-    },
     crm: (key, action, data = null) => {
         const timestamp = new Date().toISOString();
         console.log(`${LOG_PREFIX}[CRM][${key}] ${timestamp} - ${action}`, data || '');
     }
 };
 
-// ...existing code...
-
-// Global variables for CRM
+// Global variables for CRM application state
 let selectedCustomer = null;
-let customers = {
+
+// Sample customer data for demonstration
+// In production, this would come from a database
+const customers = {
     '1': {
         id: '1',
         firstName: 'John',
@@ -71,16 +73,18 @@ let customers = {
     }
 };
 
-// ...existing code...
+/* ================================
+   CRM FUNCTIONS
+   ================================ */
 
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// CRM Functions
+/**
+ * Switch between different tabs in the CRM interface
+ * @param {Event} event - Click event from tab element
+ * @param {string} tabName - Name of the tab to activate
+ */
 function switchTab(event, tabName) {
+    Logger.crm('UI-TAB', `Switching to tab: ${tabName}`);
+    
     // Remove active class from all tabs and tab contents
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -90,13 +94,18 @@ function switchTab(event, tabName) {
     document.getElementById(tabName).classList.add('active');
 }
 
+/**
+ * Search customers based on input text
+ * Filters visible customer cards in real-time
+ */
 function searchCustomers() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    Logger.crm('Customer search initiated', 'CUSTOMER-SEARCH', { searchTerm: searchTerm });
+    Logger.crm('CUSTOMER-SEARCH', `Searching for: ${searchTerm}`);
     
     const customerCards = document.querySelectorAll('.customer-card');
     let visibleCount = 0;
     
+    // Filter customer cards based on search term
     customerCards.forEach(card => {
         const text = card.textContent.toLowerCase();
         if (text.includes(searchTerm) || searchTerm === '') {
@@ -107,15 +116,15 @@ function searchCustomers() {
         }
     });
     
-    Logger.crm('Customer search completed', 'CUSTOMER-SEARCH', { 
-        searchTerm: searchTerm,
-        totalCards: customerCards.length,
-        visibleCards: visibleCount 
-    });
+    Logger.crm('CUSTOMER-SEARCH', `Found ${visibleCount} matching customers`);
 }
 
+/**
+ * Select a customer and populate their details
+ * @param {string} customerId - ID of the customer to select
+ */
 function selectCustomer(customerId) {
-    Logger.crm('Customer selection started', 'CUSTOMER-SELECT', { customerId: customerId });
+    Logger.crm('CUSTOMER-SELECT', `Selecting customer: ${customerId}`);
     
     // Remove selection from all cards
     document.querySelectorAll('.customer-card').forEach(card => {
@@ -128,9 +137,14 @@ function selectCustomer(customerId) {
     selectedCustomer = customers[customerId];
     if (selectedCustomer) {
         populateCustomerDetails(selectedCustomer);
+        Logger.crm('CUSTOMER-SELECT', `Customer selected: ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
     }
 }
 
+/**
+ * Populate customer details form with selected customer data
+ * @param {Object} customer - Customer object containing all details
+ */
 function populateCustomerDetails(customer) {
     document.getElementById('first-name').value = customer.firstName;
     document.getElementById('last-name').value = customer.lastName;
@@ -142,6 +156,9 @@ function populateCustomerDetails(customer) {
     document.getElementById('notes').value = customer.notes;
 }
 
+/**
+ * Save customer notes to the selected customer record
+ */
 function saveCustomerNotes() {
     if (selectedCustomer) {
         const notes = document.getElementById('notes').value;
@@ -152,7 +169,14 @@ function saveCustomerNotes() {
     }
 }
 
-// Simple success message utility
+/* ================================
+   QUICK ACTIONS
+   ================================ */
+
+/**
+ * Utility function to show success messages
+ * @param {string} message - Message to display
+ */
 function showSuccessMessage(message) {
     const successDiv = document.createElement('div');
     successDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#4CAF50;color:white;padding:15px;border-radius:5px;z-index:1000;';
@@ -161,77 +185,67 @@ function showSuccessMessage(message) {
     setTimeout(() => document.body.removeChild(successDiv), 3000);
 }
 
+/**
+ * Create a new case for the selected customer
+ */
 function createCase() {
     if (selectedCustomer) {
+        Logger.crm('QUICK-ACTION', `Case created for customer: ${selectedCustomer.id}`);
         alert(`Creating a new case for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
     } else {
+        Logger.warn('QUICK-ACTION', 'Create case attempted without customer selection');
         alert('Please select a customer first');
     }
 }
 
+/**
+ * Schedule a callback for the selected customer
+ */
 function scheduleCallback() {
     if (selectedCustomer) {
+        Logger.crm('QUICK-ACTION', `Callback scheduled for customer: ${selectedCustomer.id}`);
         showSuccessMessage(`✅ Callback scheduled for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
-        Logger.crm('Callback scheduled', 'CALLBACK-SCHEDULE', { customerId: selectedCustomer.id });
     } else {
+        Logger.warn('QUICK-ACTION', 'Schedule callback attempted without customer selection');
         alert('Please select a customer first');
     }
 }
 
+/**
+ * Send an email to the selected customer
+ */
 function sendEmail() {
     if (selectedCustomer) {
+        Logger.crm('QUICK-ACTION', `Email sent to customer: ${selectedCustomer.id}`);
         alert(`Sending email to ${selectedCustomer.email}`);
     } else {
+        Logger.warn('QUICK-ACTION', 'Send email attempted without customer selection');
         alert('Please select a customer first');
     }
 }
 
-// Event Listeners
+/* ================================
+   APPLICATION INITIALIZATION
+   ================================ */
+
+/**
+ * Initialize the CRM application when DOM is loaded
+ */
 document.addEventListener('DOMContentLoaded', function () {
-    // Dropdown handlers
-    if (stateMenu) {
-        stateMenu.addEventListener('click', function (e) {
-            if (!stateDropdown.contains(e.target)) {
-                stateDropdown.classList.toggle('show');
-                e.stopPropagation();
-            }
-        });
+    Logger.info('APP-INIT', 'Banking CRM application initialized');
+    
+    // Set up search input event listener for real-time search
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchCustomers);
     }
-
-    if (userMenu) {
-        userMenu.addEventListener('click', function (e) {
-            userDropdown.classList.toggle('show');
-            e.stopPropagation();
-        });
-    }
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function (e) {
-        if (stateMenu && stateDropdown && !stateMenu.contains(e.target) && !stateDropdown.contains(e.target)) {
-            stateDropdown.classList.remove('show');
-        }
-        if (userMenu && userDropdown && !userMenu.contains(e.target)) {
-            userDropdown.classList.remove('show');
-        }
-    });
-
-    // Agent state change handler
-    if (agentState) {
-        agentState.addEventListener('change', handleAgentStatus);
-    }
-
-    // Close dialogs when clicking outside
-    document.addEventListener('click', function (e) {
-        if (consultDialog && !consultDialog.contains(e.target) && !e.target.matches('#consult-button')) {
-            consultDialog.classList.add('hidden');
-        }
-        if (transferDialog && !transferDialog.contains(e.target) && !e.target.matches('#transfer-button')) {
-            transferDialog.classList.add('hidden');
-        }
-    });
 });
 
-// Expose CRM functions to global scope
+/* ================================
+   GLOBAL EXPORTS
+   ================================ */
+
+// Export functions to global scope for HTML onclick handlers
 window.switchTab = switchTab;
 window.searchCustomers = searchCustomers;
 window.selectCustomer = selectCustomer;
