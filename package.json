@@ -1,0 +1,26 @@
+{
+  "name": "banking-crm",
+  "version": "1.0.0",
+  "description": "Banking CRM application",
+  "scripts": {
+    "start": "parcel banking-crm.html",
+    "build": "parcel build banking-crm.html",
+    "dev": "parcel banking-crm.html --open"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "parcel": "^2.0.0"
+  },
+  "keywords": [
+    "banking",
+    "crm",
+    "customer-management"
+  ],
+  "author": "Banking CRM Team",
+  "license": "MIT",
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions"
+  ]
+}
