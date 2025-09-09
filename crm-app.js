@@ -1,5 +1,3 @@
-// ...existing code...
-
 /**
  * Banking CRM Application - Main JavaScript Module
  * Handles customer management, search, and CRM functionality
@@ -163,9 +161,11 @@ function saveCustomerNotes() {
     if (selectedCustomer) {
         const notes = document.getElementById('notes').value;
         selectedCustomer.notes = notes;
-        alert('Customer notes saved successfully!');
+        showSuccessMessage('Customer notes saved successfully!');
+        Logger.crm('CUSTOMER-NOTES', 'Notes saved for customer', { customerId: selectedCustomer.id });
     } else {
         alert('Please select a customer first');
+        Logger.warn('CUSTOMER-NOTES', 'Save notes attempted without customer selection');
     }
 }
 
@@ -191,7 +191,7 @@ function showSuccessMessage(message) {
 function createCase() {
     if (selectedCustomer) {
         Logger.crm('QUICK-ACTION', `Case created for customer: ${selectedCustomer.id}`);
-        alert(`Creating a new case for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
+        showSuccessMessage(`✅ Case created for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
     } else {
         Logger.warn('QUICK-ACTION', 'Create case attempted without customer selection');
         alert('Please select a customer first');
@@ -217,7 +217,7 @@ function scheduleCallback() {
 function sendEmail() {
     if (selectedCustomer) {
         Logger.crm('QUICK-ACTION', `Email sent to customer: ${selectedCustomer.id}`);
-        alert(`Sending email to ${selectedCustomer.email}`);
+        showSuccessMessage(`✅ Email sent to ${selectedCustomer.email}`);
     } else {
         Logger.warn('QUICK-ACTION', 'Send email attempted without customer selection');
         alert('Please select a customer first');
@@ -239,6 +239,31 @@ document.addEventListener('DOMContentLoaded', function () {
     if (searchInput) {
         searchInput.addEventListener('input', searchCustomers);
     }
+    
+    // Log browser and environment info
+    Logger.debug('ENV-INFO', 'Environment details', {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Set up global error handling
+    window.addEventListener('error', (event) => {
+        Logger.error('ERROR-GLOBAL', 'Global error caught', {
+            message: event.message,
+            filename: event.filename,
+            line: event.lineno,
+            column: event.colno,
+            error: event.error
+        });
+    });
+    
+    window.addEventListener('unhandledrejection', (event) => {
+        Logger.error('ERROR-PROMISE', 'Unhandled promise rejection', {
+            reason: event.reason,
+            promise: event.promise
+        });
+    });
 });
 
 /* ================================
@@ -253,34 +278,3 @@ window.saveCustomerNotes = saveCustomerNotes;
 window.createCase = createCase;
 window.scheduleCallback = scheduleCallback;
 window.sendEmail = sendEmail;
-
-// Initialize logging
-document.addEventListener('DOMContentLoaded', () => {
-    Logger.info('Banking CRM Application loaded', 'APP-INIT');
-    Logger.info('DOM Content loaded, application ready', 'DOM-READY');
-    
-    // Log browser and environment info
-    Logger.debug('Environment info', 'ENV-INFO', {
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        timestamp: new Date().toISOString()
-    });
-    
-    // Set up global error handling
-    window.addEventListener('error', (event) => {
-        Logger.error('Global error caught', 'ERROR-GLOBAL', {
-            message: event.message,
-            filename: event.filename,
-            line: event.lineno,
-            column: event.colno,
-            error: event.error
-        });
-    });
-    
-    window.addEventListener('unhandledrejection', (event) => {
-        Logger.error('Unhandled promise rejection', 'ERROR-PROMISE', {
-            reason: event.reason,
-            promise: event.promise
-        });
-    });
-});

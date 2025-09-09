@@ -4,27 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banking CRM</title>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- Main stylesheet -->
     <link rel="stylesheet" href="banking-crm.css" />
 </head>
 <body>
-    <!-- Application Header -->
+    <!-- Header -->
     <div class="header">
         <div class="container">
             <div class="header-content">
                 <h1><i class="fas fa-university"></i> Banking CRM</h1>
+
             </div>
         </div>
     </div>
 
-    <!-- Main Application Content -->
+    <!-- Main Content -->
     <div class="container">
         <div class="main-content">
-            <!-- Left Panel: Customer Management Interface -->
-            <div class="left-panel">
-                <!-- Tab Navigation -->
+            <!-- Left Panel - Customer Management -->
+            <div class="left-panel active">
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab(event, 'customer-search')">
                         <i class="fas fa-search"></i> Search
@@ -42,7 +40,6 @@
 
                 <!-- Customer Search Tab -->
                 <div class="tab-content active" id="customer-search">
-                    <!-- Search Interface -->
                     <div class="customer-search">
                         <input type="text" class="search-input" id="search-input" placeholder="Search by name, phone, or account number...">
                         <button class="btn btn-primary" onclick="searchCustomers()">
@@ -50,7 +47,6 @@
                         </button>
                     </div>
                     
-                    <!-- Customer Results List -->
                     <div id="customer-results">
                         <div class="customer-card" onclick="selectCustomer('1')">
                             <div class="customer-name">John Smith</div>
@@ -86,7 +82,6 @@
 
                 <!-- Customer Details Tab -->
                 <div class="tab-content" id="customer-details">
-                    <!-- Customer Information Form -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">First Name</label>
@@ -98,7 +93,6 @@
                         </div>
                     </div>
 
-                    <!-- Contact Information Section -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Phone Number</label>
@@ -110,13 +104,11 @@
                         </div>
                     </div>
 
-                    <!-- Address Information -->
                     <div class="form-group">
                         <label class="form-label">Address</label>
                         <input type="text" class="form-input" id="address" readonly>
                     </div>
 
-                    <!-- Personal Information -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Date of Birth</label>
@@ -128,7 +120,6 @@
                         </div>
                     </div>
 
-                    <!-- Customer Notes Section -->
                     <div class="form-group">
                         <label class="form-label">Notes</label>
                         <textarea class="form-input" id="notes" rows="4" placeholder="Add customer notes..."></textarea>
@@ -141,7 +132,6 @@
 
                 <!-- Accounts Tab -->
                 <div class="tab-content" id="accounts">
-                    <!-- Account Information List -->
                     <div id="account-list">
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--gray-100); border-radius: 8px; margin-bottom: 0.5rem;">
                             <div>
@@ -171,7 +161,6 @@
 
                 <!-- Transactions Tab -->
                 <div class="tab-content" id="transactions">
-                    <!-- Transaction History List -->
                     <div id="transaction-list">
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--gray-200);">
                             <div>
@@ -209,8 +198,9 @@
             </div>
 
             <!-- Right Panel - Customer Actions -->
-            <div class="right-panel">
-                <!-- Quick Actions Section -->
+           <div class="right-panel">
+
+                <!-- Customer Quick Actions -->
                 <div class="section">
                     <div class="section-header">
                         <i class="fas fa-bolt"></i>
@@ -229,7 +219,7 @@
                     </div>
                 </div>
 
-                <!-- Recent Activities Section -->
+                <!-- Recent Activities -->
                 <div class="section">
                     <div class="section-header">
                         <i class="fas fa-clock"></i>
@@ -252,9 +242,11 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> 
 
-    <!-- Application Scripts -->
-    <script src="crm-app.js"></script>
+
+
+    <!-- Include the CRM app.js file -->
+    <script type="module" src="./crm-app.js"></script>
 </body>
 </html>

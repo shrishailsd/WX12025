@@ -41,7 +41,7 @@ Before starting this lab, ensure you have:
 
 ### Step 1: Create Project Directory
 
-First, let's create our project directory and navigate into it:
+First, let's create our project directory in cmd and navigate into it:
 
 ```bash
 mkdir banking-crm
@@ -50,19 +50,29 @@ cd banking-crm
 
 ### Step 2: Initialize Node.js Project
 
-Initialize a new Node.js project:
+Initialize a new Node.js project, This command will create package.json that you will be updating in next step.
 
 ```bash
 npm init -y
 ```
 
+Drag and drop your newly created folder to VScode.
+
 ### Step 3: Install Dependencies
 
+Install the required development dependencies for the project:
 
+```bash
+npm install parcel --save-dev
+```
+
+This will install:
+- **Parcel**: A fast, zero-configuration web application bundler
+- Automatically handles HTML, CSS, and JavaScript bundling
 
 ### Step 4: Update package.json
 
-Replace the contents of your `package.json` with the exact configuration from the source code:
+Replace the contents of your `package.json` with the following:
 
 ```json
 {
@@ -97,7 +107,7 @@ Replace the contents of your `package.json` with the exact configuration from th
 Test that your project is properly set up:
 
 ```bash
-npm list
+ls -ltr
 ```
 
 You should see the dependencies listed without any errors. The project structure should look like:
@@ -115,7 +125,7 @@ banking-crm/
 
 ### Step 5: Create the HTML Structure
 
-Create `banking-crm.html` with the complete structure from the source code:
+Create `banking-crm.html` with the following code. NOTE : Go through the comments in green to understand what each component is rendering.
 
 ```html
 <!DOCTYPE html>
@@ -142,7 +152,7 @@ Create `banking-crm.html` with the complete structure from the source code:
     <div class="container">
         <div class="main-content">
             <!-- Left Panel - Customer Management -->
-            <div class="left-panel">
+            <div class="left-panel active">
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab(event, 'customer-search')">
                         <i class="fas fa-search"></i> Search
@@ -485,24 +495,6 @@ body {
 .left-panel.active {
     opacity: 1;
     pointer-events: auto;
-}
-
-.left-panel:not(.active)::before {
-    content: "Please login to Webex Contact Center to access CRM features";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-weight: 500;
-    color: var(--gray-600);
-    text-align: center;
-    z-index: 10;
-    width: 80%;
-    transition: opacity 0.3s ease;
 }
 
 .left-panel.active::before {
@@ -965,51 +957,49 @@ body {
 }
 ```
 
-### ✅ Checkpoint 2: Test Static UI
+### Step 7: Create the JavaScript Application
 
-At this point, you can test the static user interface:
-
-```bash
-npm run dev
-```
-
-This should:
-1. Open your browser automatically
-2. Display the Banking CRM interface
-3. Show the "Please login to Webex Contact Center" message overlay on the left panel
-4. Display the Webex login form on the right panel
-
-**Expected behavior:**
-- Professional banking-themed UI with blue gradient header
-- Disabled left panel with overlay message
-- Right panel showing Webex Contact Center login section
-- Responsive design that works on different screen sizes
-
-**File structure should now be:**
-```
-banking-crm-webex/
-├── package.json
-├── package-lock.json
-├── banking-crm.html
-├── banking-crm.css
-├── node_modules/
-└── .parcel-cache/ (created automatically)
-```
-
----
-
-
-
-### Step 8: Add Global Variables and Customer Data
-
-Add the global variables and customer data structure:
+Create `crm-app.js` with the complete CRM functionality:
 
 ```javascript
+/**
+ * Banking CRM Application - Main JavaScript Module
+ * Handles customer management, search, and CRM functionality
+ */
 
+// Unique logging prefix for easy console filtering
+const LOG_PREFIX = '[BANKING-CRM]';
 
-// Global variables for CRM
+// Logging utility with unique keys for filtering
+const Logger = {
+    info: (key, message, data = null) => {
+        const timestamp = new Date().toISOString();
+        console.log(`${LOG_PREFIX}[INFO][${key}] ${timestamp} - ${message}`, data || '');
+    },
+    warn: (key, message, data = null) => {
+        const timestamp = new Date().toISOString();
+        console.warn(`${LOG_PREFIX}[WARN][${key}] ${timestamp} - ${message}`, data || '');
+    },
+    error: (key, message, error = null) => {
+        const timestamp = new Date().toISOString();
+        console.error(`${LOG_PREFIX}[ERROR][${key}] ${timestamp} - ${message}`, error || '');
+    },
+    debug: (key, message, data = null) => {
+        const timestamp = new Date().toISOString();
+        console.log(`${LOG_PREFIX}[DEBUG][${key}] ${timestamp} - ${message}`, data || '');
+    },
+    crm: (key, action, data = null) => {
+        const timestamp = new Date().toISOString();
+        console.log(`${LOG_PREFIX}[CRM][${key}] ${timestamp} - ${action}`, data || '');
+    }
+};
+
+// Global variables for CRM application state
 let selectedCustomer = null;
-let customers = {
+
+// Sample customer data for demonstration
+// In production, this would come from a database
+const customers = {
     '1': {
         id: '1',
         firstName: 'John',
@@ -1044,695 +1034,19 @@ let customers = {
         notes: 'Business owner, interested in commercial banking services.'
     }
 };
-```
 
-### Step 9: Add DOM Element References
-
-Add the DOM element references for Webex Contact Center integration:
-
-```javascript
-
-```
-
-### Step 10: Implement Webex SDK Initialization
-
-
----
-
-
-```
-
-### Step 12: Implement Agent Station Login
-
-Add the agent login functionality:
-
-```javascript
-// Login Agent
-function loginAgent() {
-    Logger.info('Agent login process started', 'LOGIN-PROCESS');
-    
-    const teamId = teamsDropdown.value;
-    const selectedLoginOption = loginOption.value;
-
-    Logger.debug('Login parameters', 'LOGIN-PARAMS', {
-        teamId: teamId,
-        loginOption: selectedLoginOption
-    });
-
-    if (!teamId) {
-        Logger.warn('Login failed: No team selected', 'LOGIN-VALIDATION');
-        alert('Please select a team');
-        return;
-    }
-
-    if (!selectedLoginOption) {
-        Logger.warn('Login failed: No login option selected', 'LOGIN-VALIDATION');
-        alert('Please select a login option');
-        return;
-    }
-
-    // Show loading during login process
-    loadingSection.style.display = 'block';
-    loadingSection.classList.remove('hidden');
-    stationLoginSection.style.display = 'none';
-    
-    Logger.info('UI updated: Showing loading screen for login process', 'UI-UPDATE');
-    
-    // Update loading message for login
-    loadingSection.querySelector('p').textContent = 'Logging into Contact Center...';
-
-    webex.cc
-        .stationLogin({
-            teamId: teamId,
-            loginOption: selectedLoginOption,
-            dialNumber: dialNumber.value,
-        })
-        .then(() => {
-            // Step 3: Hide loading, show CRM UI (agent state section)
-            loadingSection.style.display = 'none';
-            setupLoggedInState();
-            loginStatus.textContent = 'Successfully logged in to Banking CRM!';
-        })
-        .catch((error) => {
-            loadingSection.style.display = 'none';
-            stationLoginSection.style.display = 'block'; // Show login form again on error
-            loginStatus.textContent = 'Login failed: ' + error.message;
-            console.error('Login failed:', error);
-        });
-}
-```
-
-### Step 13: Implement Logged-in State Setup
-
-Add the function that activates the full CRM UI after successful login:
-
-```javascript
-// Setup logged in state - Show the full CRM UI
-function setupLoggedInState() {
-    Logger.info('Setting up logged in state', 'STATE-SETUP');
-    
-    // Hide login-related sections
-    stationLoginSection.style.display = 'none';
-    loadingSection.style.display = 'none';
-    
-    // Step 3: Show the full CRM UI
-    agentStateSection.style.display = 'block';
-    agentStateSection.classList.remove('hidden');
-    
-    // Enable the left panel (CRM features)
-    const leftPanel = document.querySelector('.left-panel');
-    if (leftPanel) {
-        leftPanel.classList.add('active');
-        Logger.info('CRM left panel activated', 'UI-PANEL');
-    }
-    
-    // Enable agent state controls
-    agentState.disabled = false;
-    
-    // Show task area (call handling area)
-    taskArea.classList.remove('hidden');
-    taskArea.style.display = 'block';
-
-    // Hide all call-related controls initially
-    document.querySelector('.no-tasks').style.display = 'block';
-    incomingCallControls.style.display = 'none';
-    activeCallControls.style.display = 'none';
-    wrapupDialog.style.display = 'none';
-    consultDialog.style.display = 'none';
-    transferDialog.style.display = 'none';
-
-    // Set initial agent status
-    updateAgentStatus('Idle');
-
-    // Show success message
-    console.log('CRM UI fully loaded and ready for use');
-    
-    // Update the "no tasks" message to be more welcoming
-    const noTasksElement = document.querySelector('.no-tasks');
-    if (noTasksElement) {
-        noTasksElement.textContent = 'Welcome to Banking CRM! You are ready to receive calls 📞';
-    }
-}
-```
-
-### Step 14: Implement Agent Logout
-
-Add the logout functionality:
-
-```javascript
-// Logout Agent
-function logoutAgent() {
-    webex.cc
-        .stationLogout({ logoutReason: 'logout' })
-        .then(() => {
-            stationLoginSection.style.display = 'block';
-            agentStateSection.style.display = 'none';
-            agentState.disabled = true;
-            agentState.selectedIndex = 0;
-            updateAgentStatus('Offline');
-            userDropdown.classList.remove('show');
-            loginStatus.textContent = 'Logged out successfully';
-            loginButton.disabled = false;
-            teamsDropdown.selectedIndex = 0;
-            loginOption.selectedIndex = 0;
-            dialNumber.value = '';
-        })
-        .catch((error) => {
-            console.error('Logout failed:', error);
-            alert('Failed to logout');
-        });
-}
-```
-
-### Step 15: Implement Agent State Management
-
-Add agent state handling:
-
-```javascript
-// Handle agent status changes
-function handleAgentStatus(event) {
-    const selectedOption = event.target.options[event.target.selectedIndex];
-    if (selectedOption.value === 'AVAILABLE') {
-        agentStatus = 'Available';
-        auxCodeId = 0;
-    } else {
-        agentStatus = selectedOption.text;
-        auxCodeId = selectedOption.value;
-    }
-}
-
-// Set Agent State
-function setAgentState() {
-    const stateOption = agentState.options[agentState.selectedIndex];
-    if (!stateOption.value) return;
-
-    handleAgentStatus({ target: agentState });
-
-    const state = agentStatus === 'Available' ? 'Available' : 'Idle';
-
-    webex.cc
-        .setAgentState({
-            state,
-            auxCodeId,
-            lastStateChangeReason: agentStatus,
-            agentId,
-        })
-        .then((response) => {
-            console.log('Agent status set successfully', response);
-            updateAgentStatus(state);
-            stateDropdown.classList.remove('show');
-        })
-        .catch((error) => {
-            console.error('Agent status set failed', error);
-            alert('Failed to set agent state');
-        });
-}
-
-// Update agent status
-function updateAgentStatus(state) {
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const headerStatusDot = document.getElementById('header-status-dot');
-    const headerStatusText = document.getElementById('header-status-text');
-
-    // Reset classes
-    statusDot.className = 'status-dot';
-    headerStatusDot.className = 'status-dot';
-
-    switch (state) {
-        case 'Available':
-            statusDot.classList.add('status-available');
-            headerStatusDot.classList.add('status-available');
-            statusText.textContent = 'Available';
-            headerStatusText.textContent = 'Available';
-            break;
-        case 'Idle':
-            statusDot.classList.add('status-idle');
-            headerStatusDot.classList.add('status-idle');
-            statusText.textContent = 'Idle';
-            headerStatusText.textContent = 'Idle';
-            break;
-        case 'OnCall':
-            statusDot.classList.add('status-busy');
-            headerStatusDot.classList.add('status-busy');
-            statusText.textContent = 'Engaged';
-            headerStatusText.textContent = 'On Call';
-            break;
-        default:
-            statusDot.classList.add('status-idle');
-            headerStatusDot.classList.add('status-idle');
-            statusText.textContent = 'Offline';
-            headerStatusText.textContent = 'Offline';
-    }
-}
-```
-
-### ✅ Checkpoint 4: Test Agent Authentication Flow
-
-At this point, you should test the complete authentication flow:
-
-```bash
-npm run dev
-```
-
-**With a valid Webex access token, test:**
-1. Enter your access token
-2. Click "Login to Webex Contact Center"
-3. See the loading spinner
-4. Registration should succeed and show login form
-5. Select a team and login option
-6. Click "Login to CRM"
-7. Should see the full CRM interface with activated left panel
-
-**Expected behavior:**
-- Smooth transition through all UI states
-- Console logs showing each step
-- Left panel becomes active after login
-- Agent status controls become available
-- Professional CRM interface appears
-
----
-
-
-```
-
-### Step 17: Implement Task Event Handlers
-
-Add handlers for task state changes:
-
-```javascript
-// Handle task assigned
-function handleTaskAssigned() {
-    incomingCallControls.style.display = 'none';
-    incomingCallControls.classList.add('hidden');
-    activeCallControls.style.display = 'block';
-    activeCallControls.classList.remove('hidden');
-    document.querySelector('.no-tasks').style.display = 'none';
-
-    holdButton.disabled = false;
-
-    // TODO
-    const loginOpt = webex.cc?.taskManager?.webCallingService?.loginOption;
-    const isBrowserLogin = loginOpt === 'BROWSER';
-
-if (isBrowserLogin) {
-    muteButton.disabled = false;
-}
-    endButton.disabled = false;
-    consultButton.disabled = false;
-    transferButton.disabled = false;
-
-    updateAgentStatus('OnCall');
-}
-
-// Handle task media 
-function handleTaskMedia(track) {
-    Logger.webex('Media track received for active call', 'TASK-MEDIA', {
-        trackKind: track?.kind,
-        taskId: currentTask?.taskId
-    });
-    
-    document.getElementById('remote-audio').srcObject = new MediaStream([track]);
-}
-
-// Handle task end
-function handleTaskEnd(task) {
-    // Use the passed task parameter if provided, otherwise use global currentTask
-    const taskToHandle = task || currentTask;
-    
-    Logger.info('Task end event triggered', 'TASK-END', {
-        taskId: taskToHandle?.taskId,
-        wrapUpRequired: taskToHandle?.data?.wrapUpRequired
-    });
-
-    activeCallControls.style.display = 'none';
-    incomingCallControls.style.display = 'none';
-    consultDialog.style.display = 'none';
-    transferDialog.style.display = 'none';
-
-    activeCallControls.classList.add('hidden');
-    incomingCallControls.classList.add('hidden');
-    consultDialog.classList.add('hidden');
-    transferDialog.classList.add('hidden');
-
-    holdButton.disabled = true;
-    muteButton.disabled = true;
-    endButton.disabled = true;
-    consultButton.disabled = true;
-    transferButton.disabled = true;
-
-    Logger.debug('UI cleanup completed, checking wrapup requirement', 'TASK-END');
-
-    // Always show wrapup dialog and don't clear currentTask here
-    // Let the wrapup submission clear currentTask when completed
-    Logger.info('Task ended, showing wrapup dialog', 'TASK-END');
-    wrapupDialog.style.display = 'block';
-    wrapupDialog.classList.remove('hidden');
-}
-```
-
-### Step 18: Implement Call Control Functions
-
-Add the call control functions for answer, decline, hold, mute, and end:
-
-```javascript
-// Call control functions
-function answerCall() {
-    Logger.info('Answer call button clicked', 'CALL-ANSWER');
-    
-    if (currentTask) {
-        Logger.debug('Current task exists, accepting call', 'CALL-ACCEPT', {
-            taskId: currentTask.taskId,
-            interactionId: currentTask.data.interactionId
-        });
-        
-        try {
-            currentTask.accept(currentTask.data.interactionId);
-            handleTaskAssigned();
-        } catch (error) {
-            Logger.error('Error accepting call', 'CALL-ACCEPT-ERROR', error);
-            alert('Error accepting call: ' + error.message);
-        }
-    } else {
-        Logger.error('Cannot answer call: No current task', 'CALL-ANSWER-ERROR');
-        // For testing purposes, show that the button is working
-        alert('Answer button clicked! (No active call to answer)');
-    }
-}
-
-function declineCall() {
-    Logger.info('Decline call button clicked', 'CALL-DECLINE');
-    
-    if (currentTask) {
-        Logger.debug('Current task exists, declining call', 'CALL-DECLINE', {
-            taskId: currentTask.taskId,
-            interactionId: currentTask.data.interactionId
-        });
-        
-        currentTask.decline(currentTask.data.interactionId).then(() => {
-            incomingCallControls.style.display = 'none';
-            incomingCallControls.classList.add('hidden');
-            document.querySelector('.no-tasks').style.display = 'block';
-            currentTask = null;
-            updateAgentStatus('Idle');
-            Logger.info('Call declined successfully', 'CALL-DECLINED');
-        }).catch((error) => {
-            Logger.error('Failed to decline call', 'CALL-DECLINE-ERROR', error);
-            alert('Error declining call: ' + error.message);
-        });
-    } else {
-        Logger.error('Cannot decline call: No current task', 'CALL-DECLINE-ERROR');
-        // For testing purposes, show that the button is working
-        alert('Decline button clicked! (No active call to decline)');
-    }
-}
-
-function toggleHold() {
-    Logger.info('Hold/Resume button clicked', 'CALL-HOLD');
-    
-    if (currentTask) {
-        if (holdButton.textContent.includes('Hold')) {
-            Logger.debug('Putting call on hold', 'CALL-HOLD', {
-                taskId: currentTask.taskId,
-                action: 'hold'
-            });
-            
-            currentTask.hold().then(() => {
-                holdButton.innerHTML = '<i class="fas fa-play"></i> Resume';
-                Logger.info('Call placed on hold successfully', 'CALL-HOLD');
-            }).catch((error) => {
-                Logger.error('Failed to put call on hold', 'CALL-HOLD-ERROR', error);
-                alert('Error putting call on hold: ' + error.message);
-            });
-        } else {
-            Logger.debug('Resuming call from hold', 'CALL-HOLD', {
-                taskId: currentTask.taskId,
-                action: 'resume'
-            });
-            
-            currentTask.resume().then(() => {
-                holdButton.innerHTML = '<i class="fas fa-pause"></i> Hold';
-                Logger.info('Call resumed from hold successfully', 'CALL-HOLD');
-            }).catch((error) => {
-                Logger.error('Failed to resume call from hold', 'CALL-HOLD-ERROR', error);
-                alert('Error resuming call: ' + error.message);
-            });
-        }
-    } else {
-        Logger.error('Cannot toggle hold: No current task', 'CALL-HOLD-ERROR');
-        // For testing purposes, show that the button is working
-        alert('Hold button clicked! (No active call to hold)');
-    }
-}
-
-function toggleMute() {
-    if (currentTask) {
-        currentTask.toggleMute();
-        if (muteButton.textContent.includes('Mute')) {
-            muteButton.innerHTML = '<i class="fas fa-microphone"></i> Unmute';
-            muteButton.classList.add('unmuted');
-        } else {
-            muteButton.innerHTML = '<i class="fas fa-microphone-slash"></i> Mute';
-            muteButton.classList.remove('unmuted');
-        }
-    }
-}
-
-function endCall() 
-{
-    Logger.info('End call button clicked', 'CALL-END');
-    
-    if (currentTask) {
-        Logger.debug('Current task exists, ending call', 'CALL-END', {
-            taskId: currentTask.taskId,
-            action: 'end'
-        });
-        
-        currentTask.end().then(() => {
-    activeCallControls.style.display = 'none';
-    incomingCallControls.style.display = 'none';
-    consultDialog.style.display = 'none';
-    transferDialog.style.display = 'none';
-
-    activeCallControls.classList.add('hidden');
-    incomingCallControls.classList.add('hidden');
-    consultDialog.classList.add('hidden');
-    transferDialog.classList.add('hidden');
-
-    holdButton.disabled = true;
-    muteButton.disabled = true;
-    endButton.disabled = true;
-    consultButton.disabled = true;
-    transferButton.disabled = true;
-
-   /* if (!currentTask.data.wrapUpRequired) {
-        Logger.info('Call ended without wrapup required', 'CALL-END');
-        document.querySelector('.no-tasks').style.display = 'block';
-        currentTask = null;
-        return;
-    }*/
-
-    Logger.info('Call ended, showing wrapup dialog', 'CALL-END');
-    wrapupDialog.style.display = 'block';
-    wrapupDialog.classList.remove('hidden');
-    Logger.info('Call ended successfully', 'CALL-END');
-        }).catch((error) => {
-            Logger.error('Failed to end call', 'CALL-END-ERROR', error);
-            alert('Error ending call: ' + error.message);
-        });
-    } else {
-        Logger.error('Cannot end call: No current task', 'CALL-END-ERROR');
-        // For testing purposes, show that the button is working
-        alert('End button clicked! (No active call to end)');
-    }
-}
-```
-
-### Step 19: Implement Wrapup Functionality
-
-Add call wrapup handling:
-
-```javascript
-function submitWrapup() {
-    Logger.info('Wrapup submission started', 'WRAPUP-SUBMIT');
-    
-    // Debug the current state
-    Logger.debug('Checking wrapup submission conditions', 'WRAPUP-SUBMIT', {
-        hasCurrentTask: !!currentTask,
-        currentTaskId: currentTask?.taskId,
-        wrapupDropdownValue: wrapupCodesDropdown.value,
-        wrapupDropdownSelectedIndex: wrapupCodesDropdown.selectedIndex,
-        totalWrapupOptions: wrapupCodesDropdown.options.length
-    });
-    
-    if (currentTask && wrapupCodesDropdown.value && wrapupCodesDropdown.value !== '') {
-        const wrapupReason = wrapupCodesDropdown.options[wrapupCodesDropdown.selectedIndex].text;
-        const auxCodeId = wrapupCodesDropdown.options[wrapupCodesDropdown.selectedIndex].value;
-
-        Logger.debug('Submitting wrapup with selected reason', 'WRAPUP-SUBMIT', {
-            taskId: currentTask.taskId,
-            wrapupReason: wrapupReason,
-            auxCodeId: auxCodeId
-        });
-
-        currentTask
-            .wrapup({
-                wrapUpReason: wrapupReason,
-                auxCodeId: auxCodeId,
-            })
-            .then(() => {
-                Logger.info('Wrapup completed successfully', 'WRAPUP-SUBMIT');
-                wrapupDialog.classList.add('hidden');
-                document.querySelector('.no-tasks').style.display = 'block';
-                currentTask = null;
-                wrapupCodesDropdown.selectedIndex = 0;
-                updateAgentStatus('Available');
-            })
-            .catch((error) => {
-                Logger.error('Wrapup failed', 'WRAPUP-SUBMIT-ERROR', error);
-                alert('Failed to complete wrapup');
-            });
-    } else {
-        Logger.warn('Wrapup submission failed: No task or wrapup reason selected', 'WRAPUP-VALIDATION', {
-            hasCurrentTask: !!currentTask,
-            wrapupValue: wrapupCodesDropdown.value,
-            wrapupValueType: typeof wrapupCodesDropdown.value,
-            selectedIndex: wrapupCodesDropdown.selectedIndex
-        });
-        alert('Please select a wrapup reason');
-    }
-}
-```
-
-### Step 20: Implement Consult and Transfer Functions
-
-Add consult and transfer capabilities:
-
-```javascript
-// Consult functions
-function showConsultDialog() {
-
-    if (currentTask) {
-        if (consultButton.textContent.includes('End Consult')) {
-            consultButton.disabled = true;
-            Logger.debug('User clicked end consult', 'END_CONSULT', {
-                taskId: currentTask.taskId,
-                action: 'Endconsult'
-            });
-            
-    currentTask
-        .endConsult({
-               isConsult: true,
-               destinationType: 'dialNumber',
-        })
-        .then(() => {
-            console.log('End Consult is success');
-            hideConsultDialog();
-           // consultButton.innerHTML = '<i class="fas fa-play"></i> resume';
-           // consultButton.disabled = true;
-           holdButton.innerHTML = '<i class="fas fa-play"></i> Resume';
-        })
-        .catch((error) => {
-            console.error('End Consult failed:', error);
-            alert('Failed to End consult');
-        });
-    }}
-        
-
-
-    consultDialog.style.display = 'block';
-    consultDialog.classList.remove('hidden');
-}
-
-function hideConsultDialog() {
-    consultDialog.style.display = 'none';
-    consultDialog.classList.add('hidden');
-}
-
-function initiateConsult() {
-    const destination = document.getElementById('consult-destination').value;
-    if (!destination) {
-        alert('Please enter a destination');
-        return;
-    }
-
-    currentTask
-        .consult({
-            to: destination,
-            destinationType: 'dialNumber',
-        })
-        .then(() => {
-            console.log('Consult initiated successfully');
-            hideConsultDialog();
-            consultButton.innerHTML = '<i class="fas fa-play"></i> End Consult';
-           // consultButton.disabled = true;
-        })
-        .catch((error) => {
-            console.error('Consult failed:', error);
-            alert('Failed to initiate consult');
-        });
-}
-
-// Transfer functions
-function showTransferDialog() {
-    transferDialog.style.display = 'block';
-    transferDialog.classList.remove('hidden');
-}
-
-function hideTransferDialog() {
-    transferDialog.style.display = 'none';
-    transferDialog.classList.add('hidden');
-}
-
-function initiateTransfer() {
-    const destination = document.getElementById('transfer-destination').value;
-    if (!destination) {
-        alert('Please enter a destination');
-        return;
-    }
-
-    currentTask
-        .transfer({
-            to: destination,
-            destinationType: 'dialNumber',
-        })
-        .then(() => {
-            Logger.info('Transfer initiated successfully', 'CALL-TRANSFER');
-            hideTransferDialog();
-            handleTaskEnd();
-        })
-        .catch((error) => {
-            Logger.error('Transfer failed', 'CALL-TRANSFER-ERROR', error);
-            alert('Failed to initiate transfer');
-        });
-}
-```
-
-### ✅ Checkpoint 5: Test Call Handling Logic
-
-Test the call handling functionality:
-
-```bash
-npm run dev
-```
-
-**Test these features:**
-1. **Call control buttons**: Click answer/decline buttons (should show alerts without real calls)
-2. **Console logging**: Check for detailed call handling logs
-3. **UI transitions**: Verify smooth state changes between call states
-4. **Error handling**: Test with invalid inputs
-
----
-
-## 🏦 Part 6: CRM Functionality Implementation
-
-### Step 21: Implement CRM Tab Switching
-
-Add the CRM tab functionality:
-
-```javascript
-// CRM Functions
+/* ================================
+   CRM FUNCTIONS
+   ================================ */
+
+/**
+ * Switch between different tabs in the CRM interface
+ * @param {Event} event - Click event from tab element
+ * @param {string} tabName - Name of the tab to activate
+ */
 function switchTab(event, tabName) {
+    Logger.crm('UI-TAB', `Switching to tab: ${tabName}`);
+    
     // Remove active class from all tabs and tab contents
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1741,20 +1055,19 @@ function switchTab(event, tabName) {
     event.target.classList.add('active');
     document.getElementById(tabName).classList.add('active');
 }
-```
 
-### Step 22: Implement Customer Search and Selection
-
-Add customer search and selection functionality:
-
-```javascript
+/**
+ * Search customers based on input text
+ * Filters visible customer cards in real-time
+ */
 function searchCustomers() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    Logger.crm('Customer search initiated', 'CUSTOMER-SEARCH', { searchTerm: searchTerm });
+    Logger.crm('CUSTOMER-SEARCH', `Searching for: ${searchTerm}`);
     
     const customerCards = document.querySelectorAll('.customer-card');
     let visibleCount = 0;
     
+    // Filter customer cards based on search term
     customerCards.forEach(card => {
         const text = card.textContent.toLowerCase();
         if (text.includes(searchTerm) || searchTerm === '') {
@@ -1765,15 +1078,15 @@ function searchCustomers() {
         }
     });
     
-    Logger.crm('Customer search completed', 'CUSTOMER-SEARCH', { 
-        searchTerm: searchTerm,
-        totalCards: customerCards.length,
-        visibleCards: visibleCount 
-    });
+    Logger.crm('CUSTOMER-SEARCH', `Found ${visibleCount} matching customers`);
 }
 
+/**
+ * Select a customer and populate their details
+ * @param {string} customerId - ID of the customer to select
+ */
 function selectCustomer(customerId) {
-    Logger.crm('Customer selection started', 'CUSTOMER-SELECT', { customerId: customerId });
+    Logger.crm('CUSTOMER-SELECT', `Selecting customer: ${customerId}`);
     
     // Remove selection from all cards
     document.querySelectorAll('.customer-card').forEach(card => {
@@ -1786,9 +1099,14 @@ function selectCustomer(customerId) {
     selectedCustomer = customers[customerId];
     if (selectedCustomer) {
         populateCustomerDetails(selectedCustomer);
+        Logger.crm('CUSTOMER-SELECT', `Customer selected: ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
     }
 }
 
+/**
+ * Populate customer details form with selected customer data
+ * @param {Object} customer - Customer object containing all details
+ */
 function populateCustomerDetails(customer) {
     document.getElementById('first-name').value = customer.firstName;
     document.getElementById('last-name').value = customer.lastName;
@@ -1800,23 +1118,29 @@ function populateCustomerDetails(customer) {
     document.getElementById('notes').value = customer.notes;
 }
 
+/**
+ * Save customer notes to the selected customer record
+ */
 function saveCustomerNotes() {
     if (selectedCustomer) {
         const notes = document.getElementById('notes').value;
         selectedCustomer.notes = notes;
-        alert('Customer notes saved successfully!');
+        showSuccessMessage('Customer notes saved successfully!');
+        Logger.crm('CUSTOMER-NOTES', 'Notes saved for customer', { customerId: selectedCustomer.id });
     } else {
         alert('Please select a customer first');
+        Logger.warn('CUSTOMER-NOTES', 'Save notes attempted without customer selection');
     }
 }
-```
 
-### Step 23: Implement Quick Actions
+/* ================================
+   QUICK ACTIONS
+   ================================ */
 
-Add the CRM quick action functions:
-
-```javascript
-// Simple success message utility
+/**
+ * Utility function to show success messages
+ * @param {string} message - Message to display
+ */
 function showSuccessMessage(message) {
     const successDiv = document.createElement('div');
     successDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#4CAF50;color:white;padding:15px;border-radius:5px;z-index:1000;';
@@ -1825,120 +1149,63 @@ function showSuccessMessage(message) {
     setTimeout(() => document.body.removeChild(successDiv), 3000);
 }
 
+/**
+ * Create a new case for the selected customer
+ */
 function createCase() {
     if (selectedCustomer) {
-        alert(`Creating a new case for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
+        Logger.crm('QUICK-ACTION', `Case created for customer: ${selectedCustomer.id}`);
+        showSuccessMessage(`✅ Case created for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
     } else {
+        Logger.warn('QUICK-ACTION', 'Create case attempted without customer selection');
         alert('Please select a customer first');
     }
 }
 
+/**
+ * Schedule a callback for the selected customer
+ */
 function scheduleCallback() {
     if (selectedCustomer) {
+        Logger.crm('QUICK-ACTION', `Callback scheduled for customer: ${selectedCustomer.id}`);
         showSuccessMessage(`✅ Callback scheduled for ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
-        Logger.crm('Callback scheduled', 'CALLBACK-SCHEDULE', { customerId: selectedCustomer.id });
     } else {
+        Logger.warn('QUICK-ACTION', 'Schedule callback attempted without customer selection');
         alert('Please select a customer first');
     }
 }
 
+/**
+ * Send an email to the selected customer
+ */
 function sendEmail() {
     if (selectedCustomer) {
-        alert(`Sending email to ${selectedCustomer.email}`);
+        Logger.crm('QUICK-ACTION', `Email sent to customer: ${selectedCustomer.id}`);
+        showSuccessMessage(`✅ Email sent to ${selectedCustomer.email}`);
     } else {
+        Logger.warn('QUICK-ACTION', 'Send email attempted without customer selection');
         alert('Please select a customer first');
     }
 }
-```
 
-### Step 24: Implement Event Listeners
+/* ================================
+   APPLICATION INITIALIZATION
+   ================================ */
 
-Add all the event listeners for user interactions:
-
-```javascript
-// Event Listeners
+/**
+ * Initialize the CRM application when DOM is loaded
+ */
 document.addEventListener('DOMContentLoaded', function () {
-    // Dropdown handlers
-    if (stateMenu) {
-        stateMenu.addEventListener('click', function (e) {
-            if (!stateDropdown.contains(e.target)) {
-                stateDropdown.classList.toggle('show');
-                e.stopPropagation();
-            }
-        });
+    Logger.info('APP-INIT', 'Banking CRM application initialized');
+    
+    // Set up search input event listener for real-time search
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchCustomers);
     }
-
-    if (userMenu) {
-        userMenu.addEventListener('click', function (e) {
-            userDropdown.classList.toggle('show');
-            e.stopPropagation();
-        });
-    }
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function (e) {
-        if (stateMenu && stateDropdown && !stateMenu.contains(e.target) && !stateDropdown.contains(e.target)) {
-            stateDropdown.classList.remove('show');
-        }
-        if (userMenu && userDropdown && !userMenu.contains(e.target)) {
-            userDropdown.classList.remove('show');
-        }
-    });
-
-    // Agent state change handler
-    if (agentState) {
-        agentState.addEventListener('change', handleAgentStatus);
-    }
-
-    // Close dialogs when clicking outside
-    document.addEventListener('click', function (e) {
-        if (consultDialog && !consultDialog.contains(e.target) && !e.target.matches('#consult-button')) {
-            consultDialog.classList.add('hidden');
-        }
-        if (transferDialog && !transferDialog.contains(e.target) && !e.target.matches('#transfer-button')) {
-            transferDialog.classList.add('hidden');
-        }
-    });
-});
-```
-
-### Step 25: Expose Functions to Global Scope
-
-Add function exposure and application initialization:
-
-```javascript
-// Expose functions to global scope
-window.initializeSDK = initializeSDK;
-window.loginAgent = loginAgent;
-window.logoutAgent = logoutAgent;
-window.setAgentState = setAgentState;
-window.answerCall = answerCall;
-window.declineCall = declineCall;
-window.toggleHold = toggleHold;
-window.toggleMute = toggleMute;
-window.endCall = endCall;
-window.submitWrapup = submitWrapup;
-window.showConsultDialog = showConsultDialog;
-window.hideConsultDialog = hideConsultDialog;
-window.initiateConsult = initiateConsult;
-window.showTransferDialog = showTransferDialog;
-window.hideTransferDialog = hideTransferDialog;
-window.initiateTransfer = initiateTransfer;
-window.switchTab = switchTab;
-window.searchCustomers = searchCustomers;
-window.selectCustomer = selectCustomer;
-window.saveCustomerNotes = saveCustomerNotes;
-window.createCase = createCase;
-window.scheduleCallback = scheduleCallback;
-window.sendEmail = sendEmail;
-
-// Initialize logging
-document.addEventListener('DOMContentLoaded', () => {
-    Logger.info('Banking CRM Application loaded', 'APP-INIT');
-    Logger.info('DOM Content loaded, application ready', 'DOM-READY');
     
     // Log browser and environment info
-    Logger.debug('Environment info', 'ENV-INFO', {
+    Logger.debug('ENV-INFO', 'Environment details', {
         userAgent: navigator.userAgent,
         url: window.location.href,
         timestamp: new Date().toISOString()
@@ -1946,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set up global error handling
     window.addEventListener('error', (event) => {
-        Logger.error('Global error caught', 'ERROR-GLOBAL', {
+        Logger.error('ERROR-GLOBAL', 'Global error caught', {
             message: event.message,
             filename: event.filename,
             line: event.lineno,
@@ -1956,45 +1223,186 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     window.addEventListener('unhandledrejection', (event) => {
-        Logger.error('Unhandled promise rejection', 'ERROR-PROMISE', {
+        Logger.error('ERROR-PROMISE', 'Unhandled promise rejection', {
             reason: event.reason,
             promise: event.promise
         });
     });
 });
+
+/* ================================
+   GLOBAL EXPORTS
+   ================================ */
+
+// Export functions to global scope for HTML onclick handlers
+window.switchTab = switchTab;
+window.searchCustomers = searchCustomers;
+window.selectCustomer = selectCustomer;
+window.saveCustomerNotes = saveCustomerNotes;
+window.createCase = createCase;
+window.scheduleCallback = scheduleCallback;
+window.sendEmail = sendEmail;
 ```
 
-### ✅ Checkpoint 6: Test Complete CRM Functionality
+### ✅ Checkpoint 2: Test CRM Application
 
-Test the complete application:
+At this point, you can test the complete CRM application:
 
 ```bash
 npm run dev
 ```
 
-**Test all CRM features:**
-
-1. **Tab Switching**: Click between Search, Details, Accounts, and Transactions tabs
-2. **Customer Search**: Type in the search box and click Search
-3. **Customer Selection**: Click on customer cards to select them
-4. **Customer Details**: Select a customer and switch to Details tab
-5. **Notes**: Add notes and click Save Notes
-6. **Quick Actions**: Test Create Case, Schedule Callback, Send Email buttons
-7. **Console Logging**: Check for comprehensive logging of all actions
+This should:
+1. Open your browser automatically
+2. Display the Banking CRM interface with full functionality
+3. Show customer search and details tabs
+4. Enable customer selection and quick actions
 
 **Expected behavior:**
-- Smooth tab transitions
-- Search filters customer cards correctly
-- Customer selection populates details form
-- Notes can be saved successfully
-- Quick actions show appropriate alerts
-- All interactions are logged to console with timestamps
+- Professional banking-themed UI with blue gradient header
+- Working tab navigation between Search, Details, Accounts, and Transactions
+- Customer search functionality with real-time filtering
+- Customer selection populates the details form
+- Quick action buttons (Create Case, Schedule Callback, Send Email) work
+- Console logging shows detailed application activity
+
+**Test the following features:**
+1. **Tab Switching**: Click between different tabs in the left panel
+2. **Customer Search**: Type in the search box to filter customers
+3. **Customer Selection**: Click on customer cards to select them
+4. **Details Population**: Switch to Details tab after selecting a customer
+5. **Notes Saving**: Add notes and click "Save Notes"
+6. **Quick Actions**: Test the three quick action buttons in the right panel
+7. **Console Logging**: Open browser dev tools to see detailed logs with timestamps
+
+**File structure should now be:**
+```
+banking-crm/
+├── package.json
+├── package-lock.json
+├── banking-crm.html
+├── banking-crm.css
+├── crm-app.js
+├── node_modules/
+└── .parcel-cache/ (created automatically)
+```
 
 ---
 
-## 🚀 Part 7: Production Build and Deployment
+## 🎯 Part 3: Testing and Understanding the Application
 
-### Step 26: Create Production Build
+### Application Features Overview
+
+Your Banking CRM application now includes:
+
+**1. Customer Management System**
+- Real-time customer search and filtering
+- Customer selection and details management
+- Editable customer notes with save functionality
+
+**2. Professional User Interface**
+- Modern banking-themed design with gradient header
+- Responsive tab navigation system
+- Interactive customer cards with hover effects
+- Success message notifications
+
+**3. Quick Action Tools**
+- Create Case functionality for customer issues
+- Schedule Callback for follow-up appointments  
+- Send Email integration for customer communication
+
+**4. Comprehensive Logging System**
+- Detailed console logging with timestamps
+- Unique log keys for easy filtering ([BANKING-CRM][INFO][KEY])
+- Error handling and debugging capabilities
+- Application state tracking
+
+### Understanding the Code Structure
+
+**Customer Data Management:**
+```javascript
+// Sample customer data structure
+const customers = {
+    '1': {
+        id: '1',
+        firstName: 'John',
+        lastName: 'Smith',
+        phone: '(555) 123-4567',
+        email: 'john.smith@email.com',
+        // ... additional fields
+    }
+};
+```
+
+**Tab Navigation System:**
+```javascript
+function switchTab(event, tabName) {
+    // Remove active states from all tabs
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    
+    // Activate selected tab
+    event.target.classList.add('active');
+    document.getElementById(tabName).classList.add('active');
+}
+```
+
+**Search Functionality:**
+```javascript
+function searchCustomers() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    // Filter customer cards based on search term
+    customerCards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+```
+
+### ✅ Final Testing Checklist
+
+Test all features systematically:
+
+**1. Tab Navigation**
+- [ ] Click "Search" tab - should show customer list
+- [ ] Click "Details" tab - should show customer form
+- [ ] Click "Accounts" tab - should show account placeholder
+- [ ] Click "Transactions" tab - should show transaction placeholder
+
+**2. Customer Search**
+- [ ] Type "John" in search box - should filter to John Smith
+- [ ] Type "555" in search box - should show customers with matching phone numbers
+- [ ] Clear search box - should show all customers
+
+**3. Customer Selection**
+- [ ] Click on John Smith card - should highlight the card
+- [ ] Switch to Details tab - should populate form with John's information
+- [ ] Select different customer - should update form data
+
+**4. Notes Management**
+- [ ] Select a customer and go to Details tab
+- [ ] Modify the notes field
+- [ ] Click "Save Notes" - should show success message
+- [ ] Select another customer and return - notes should be saved
+
+**5. Quick Actions**
+- [ ] Select a customer
+- [ ] Click "Create Case" - should show success message with customer name
+- [ ] Click "Schedule Callback" - should show success message
+- [ ] Click "Send Email" - should show success message with email address
+- [ ] Try quick actions without selecting customer - should show alert
+
+**6. Console Logging**
+- [ ] Open browser Developer Tools (F12)
+- [ ] Go to Console tab
+- [ ] Perform various actions and observe detailed logging
+- [ ] Look for log entries starting with [BANKING-CRM]
+
+---
+
+## 🚀 Part 4: Production Build and Deployment
+
+### Step 8: Create Production Build
 
 Build the application for production:
 
@@ -2008,7 +1416,7 @@ This will:
 - Optimize CSS and HTML
 - Generate production-ready assets
 
-### Step 27: Test Production Build
+### Step 9: Test Production Build
 
 You can serve the production build locally:
 
@@ -2030,259 +1438,35 @@ serve dist
 
 ---
 
-## 🎯 Part 8: Understanding Key Webex SDK Concepts
-
-### Webex SDK Architecture
-
-The application demonstrates these core Webex Contact Center SDK concepts:
-
-**1. SDK Initialization**
-```javascript
-webex = Webex.init({
-    config: generateWebexConfig(),
-    credentials: { access_token: accessToken }
-});
-```
-
-**2. Agent Registration**
-```javascript
-webex.cc.register(true).then((profile) => {
-    // Access to teams, idle codes, wrapup codes
-});
-```
-
-**3. Station Login**
-```javascript
-webex.cc.stationLogin({
-    teamId: teamId,
-    loginOption: selectedLoginOption,
-    dialNumber: dialNumber.value
-});
-```
-
-**4. Task Handling**
-```javascript
-webex.cc.on('task:incoming', handleIncomingCall);
-// Task events: assigned, media, end
-```
-
-**5. Call Controls**
-- `currentTask.accept()` - Accept incoming call
-- `currentTask.decline()` - Decline incoming call
-- `currentTask.hold()` / `currentTask.resume()` - Hold/Resume
-- `currentTask.toggleMute()` - Mute/Unmute
-- `currentTask.end()` - End call
-
-**6. Advanced Features**
-- `currentTask.consult()` - Initiate consult call
-- `currentTask.transfer()` - Transfer call
-- `currentTask.wrapup()` - Complete call wrapup
-
-### Key Integration Points
-
-**1. Customer Auto-Population**
-The app automatically selects customers based on caller ID:
-```javascript
-function autoSelectCustomerByCaller(phoneNumber) {
-    // Matches incoming caller ID with customer database
-}
-```
-
-**2. Real-time Status Updates**
-Agent status is synchronized between header and control panel:
-```javascript
-function updateAgentStatus(state) {
-    // Updates multiple UI elements simultaneously
-}
-```
-
-**3. Comprehensive Logging**
-All actions are logged with unique keys for easy filtering:
-```javascript
-Logger.webex('SDK-INIT', 'message', data);
-Logger.crm('CUSTOMER-SELECT', 'message', data);
-```
-
-**4. Call Control Logging**
-The application implements consistent logging patterns for all call control operations:
-```javascript
-// Hold/Resume operations with detailed context
-Logger.info('Hold/Resume button clicked', 'CALL-HOLD');
-Logger.debug('Putting call on hold', 'CALL-HOLD', {
-    taskId: currentTask.taskId,
-    action: 'hold'
-});
-Logger.info('Call placed on hold successfully', 'CALL-HOLD');
-Logger.error('Failed to put call on hold', 'CALL-HOLD-ERROR', error);
-
-// Answer/Decline operations
-Logger.info('Answer call button clicked', 'CALL-ANSWER');
-Logger.info('Decline call button clicked', 'CALL-DECLINE');
-
-// Media track handling
-Logger.webex('Media track received for active call', 'TASK-MEDIA', {
-    trackKind: track?.kind,
-    taskId: currentTask?.taskId
-});
-```
-
-**Key Logging Categories:**
-- `CALL-HOLD`: Hold/Resume actions and status
-- `CALL-ANSWER`: Call acceptance operations  
-- `CALL-DECLINE`: Call decline operations
-- `TASK-MEDIA`: Media track handling and audio setup
-- `CALL-HOLD-ERROR`: Hold/Resume error handling
-- `CALL-ACCEPT-ERROR`: Call acceptance error handling
-- `CALL-DECLINE-ERROR`: Call decline error handling
-
----
-
-## 🔧 Part 9: Troubleshooting and Best Practices
-
-### Common Issues and Solutions
-
-**1. SDK Initialization Fails**
-- Verify access token is valid and not expired
-- Check network connectivity to Webex services
-- Ensure correct Webex environment (production vs sandbox)
-
-**2. Agent Login Issues**
-- Confirm agent is assigned to the selected team
-- Verify agent has proper permissions
-- Check that login option matches agent configuration
-
-**3. Call Handling Problems**
-- Ensure microphone permissions are granted
-- Check browser compatibility (Chrome recommended)
-- Verify media stream setup for audio
-
-**4. UI Not Responding**
-- Check browser console for JavaScript errors
-- Verify all DOM elements exist before accessing them
-- Ensure proper event listener registration
-
-### Best Practices Implemented
-
-**1. Error Handling**
-```javascript
-try {
-    // Webex operations
-} catch (error) {
-    Logger.error('context', 'message', error);
-    // User-friendly error messages
-}
-```
-
-**2. Defensive Programming**
-```javascript
-const loginOpt = webex.cc?.taskManager?.webCallingService?.loginOption;
-// Using optional chaining to prevent errors
-```
-
-**3. Comprehensive Logging**
-- All actions logged with timestamps
-- Unique keys for easy filtering
-- Different log levels (info, warn, error, debug)
-
-**4. UI State Management**
-- Clear separation of concerns
-- Smooth transitions between states
-- Proper cleanup of event listeners
-
-### Performance Considerations
-
-**1. DOM Manipulation**
-- Cache DOM references for frequently accessed elements
-- Batch DOM updates when possible
-- Use CSS classes for state changes instead of inline styles
-
-**2. Memory Management**
-- Clean up event listeners when components are destroyed
-- Avoid memory leaks from circular references
-- Properly dispose of media streams
-
----
-
-## 📚 Part 10: Extensions and Advanced Features
-
-### Possible Enhancements
-
-**1. Real Customer Database Integration**
-- Replace static customer data with API calls
-- Implement real-time customer data synchronization
-- Add customer data validation and sanitization
-
-**2. Advanced Call Features**
-- Call recording controls
-- Conference call management
-- Screen sharing integration
-- Video call support
-
-**3. Reporting and Analytics**
-- Call duration tracking
-- Agent performance metrics
-- Customer interaction history
-- Real-time dashboards
-
-**4. Security Enhancements**
-- Token refresh mechanism
-- Secure storage of sensitive data
-- Audit logging for compliance
-- Role-based access control
-
-### Integration Possibilities
-
-**1. CRM Systems**
-- Salesforce integration
-- Microsoft Dynamics integration
-- Custom CRM API integration
-
-**2. Communication Channels**
-- Email integration
-- Chat/messaging support
-- Social media integration
-- SMS capabilities
-
-**3. Business Applications**
-- Calendar integration for callbacks
-- Document management systems
-- Knowledge base integration
-- Ticketing system integration
-
----
-
 ## 🎉 Conclusion
 
-Congratulations! You have successfully built a complete Banking CRM application with Webex Contact Center SDK integration. This application demonstrates:
+Congratulations! You have successfully built a complete Banking CRM application. This application demonstrates:
 
 ### What You've Accomplished
 
 ✅ **Full-stack Web Application**: Complete HTML, CSS, and JavaScript implementation  
-✅ **Webex SDK Integration**: Proper SDK initialization, registration, and authentication  
-✅ **Call Handling**: Complete call lifecycle management (incoming, active, wrapup)  
-✅ **Agent Management**: Status control, team selection, and login options  
-✅ **CRM Functionality**: Customer search, selection, details management, and notes  
+✅ **Customer Management**: Search, selection, details management, and notes  
 ✅ **Professional UI**: Responsive design with modern styling and animations  
+✅ **Interactive Features**: Tab navigation, real-time search, and quick actions  
 ✅ **Error Handling**: Comprehensive error management and user feedback  
 ✅ **Logging System**: Detailed logging for debugging and monitoring  
 ✅ **Production Ready**: Build system and deployment preparation  
 
 ### Key Learning Outcomes
 
-- **Webex Contact Center SDK**: Understanding of core concepts and API usage
-- **Modern JavaScript**: ES6 modules, async/await, event handling
-- **Web Development**: DOM manipulation, CSS Grid/Flexbox, responsive design
-- **Contact Center Concepts**: Agent workflows, call routing, task management
+- **Modern JavaScript**: ES6 modules, event handling, DOM manipulation
+- **Web Development**: CSS Grid/Flexbox, responsive design, user experience
 - **Software Architecture**: Separation of concerns, error handling, logging
+- **Customer Management**: CRM workflows, data management, user interactions
 
 ### Next Steps
 
-1. **Deploy to Production**: Use your preferred hosting platform
-2. **Connect Real Data**: Integrate with actual customer databases
-3. **Add Security**: Implement proper authentication and authorization
-4. **Monitor Performance**: Add analytics and performance monitoring
-5. **Extend Features**: Build additional CRM and contact center capabilities
+1. **Deploy to Production**: Use your preferred hosting platform (Netlify, Vercel, etc.)
+2. **Connect Real Data**: Integrate with actual customer databases or APIs
+3. **Add Security**: Implement proper authentication and data validation
+4. **Extend Features**: Add more CRM capabilities like reporting, analytics, etc.
+5. **Mobile Optimization**: Enhance mobile responsiveness and add PWA features
 
-This lab provides a solid foundation for building enterprise-grade contact center applications with Webex Contact Center SDK. The patterns and practices demonstrated here can be extended to create more complex and feature-rich applications.
+This lab provides a solid foundation for building enterprise-grade customer management applications. The patterns and practices demonstrated here can be extended to create more complex and feature-rich applications.
 
 **Happy coding!** 🚀
