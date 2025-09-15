@@ -39,9 +39,9 @@ let selectedCustomer = null;
 const customers = {
     '1': {
         id: '1',
-        firstName: 'shri',
-        lastName: 'SD',
-        phone: '+19197980470',
+        firstName: 'john',
+        lastName: 'smith',
+        phone: '(555) 987-6544',
         email: 'john.smith@email.com',
         address: '123 Main St, Anytown, ST 12345',
         dob: '1985-06-15',
