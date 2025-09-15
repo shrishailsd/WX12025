@@ -1,6 +1,7 @@
 /**
  * Banking CRM Application - Main JavaScript Module
  * Handles customer management, search, and CRM functionality
+ * Integrates with Webex Contact Center for call handling
  */
 
 // Unique logging prefix for easy console filtering
@@ -34,13 +35,13 @@ const Logger = {
 let selectedCustomer = null;
 
 // Sample customer data for demonstration
-// In production, this would come from a database
+// In production, this would come from a database API
 const customers = {
     '1': {
         id: '1',
-        firstName: 'John',
-        lastName: 'Smith',
-        phone: '(555) 123-4567',
+        firstName: 'shri',
+        lastName: 'SD',
+        phone: '+19197980470',
         email: 'john.smith@email.com',
         address: '123 Main St, Anytown, ST 12345',
         dob: '1985-06-15',
@@ -90,6 +91,38 @@ function switchTab(event, tabName) {
     // Add active class to clicked tab and corresponding content
     event.target.classList.add('active');
     document.getElementById(tabName).classList.add('active');
+}
+
+/**
+ * Populate customer cards dynamically from customer data
+ */
+function populateCustomerCards() {
+    const customerResults = document.getElementById('customer-results');
+    if (!customerResults) return;
+    
+    Logger.crm('UI-POPULATE', 'Populating customer cards from data');
+    
+    customerResults.innerHTML = '';
+    
+    Object.values(customers).forEach(customer => {
+        const customerCard = document.createElement('div');
+        customerCard.className = 'customer-card';
+        customerCard.onclick = () => selectCustomer(customer.id);
+        
+        customerCard.innerHTML = `
+            <div class="customer-name">${customer.firstName} ${customer.lastName}</div>
+            <div class="customer-info">
+                <div><i class="fas fa-phone"></i> ${customer.phone}</div>
+                <div><i class="fas fa-envelope"></i> ${customer.email}</div>
+                <div><i class="fas fa-credit-card"></i> ****${customer.id}234</div>
+                <div><i class="fas fa-calendar"></i> Member since ${new Date(customer.memberSince).getFullYear()}</div>
+            </div>
+        `;
+        
+        customerResults.appendChild(customerCard);
+    });
+    
+    Logger.crm('UI-POPULATE', `Created ${Object.keys(customers).length} customer cards`);
 }
 
 /**
@@ -234,6 +267,9 @@ function sendEmail() {
 document.addEventListener('DOMContentLoaded', function () {
     Logger.info('APP-INIT', 'Banking CRM application initialized');
     
+    // Populate customer cards from data
+    populateCustomerCards();
+    
     // Set up search input event listener for real-time search
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
@@ -267,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /* ================================
-   GLOBAL EXPORTS
+   GLOBAL EXPORTS FOR HTML INTEGRATION
    ================================ */
 
 // Export functions to global scope for HTML onclick handlers
@@ -278,3 +314,6 @@ window.saveCustomerNotes = saveCustomerNotes;
 window.createCase = createCase;
 window.scheduleCallback = scheduleCallback;
 window.sendEmail = sendEmail;
+window.populateCustomerCards = populateCustomerCards;
+// Export customers data for access from Webex component
+window.customers = customers;

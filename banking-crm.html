@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banking CRM</title>
+    <!-- External CSS dependencies -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="banking-crm.css" />
 </head>
 <body>
-    <!-- Header -->
+    <!-- Main application header -->
     <div class="header">
         <div class="container">
             <div class="header-content">
@@ -23,6 +24,7 @@
         <div class="main-content">
             <!-- Left Panel - Customer Management -->
             <div class="left-panel active">
+                <!-- Navigation tabs for different CRM sections -->
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab(event, 'customer-search')">
                         <i class="fas fa-search"></i> Search
@@ -40,6 +42,7 @@
 
                 <!-- Customer Search Tab -->
                 <div class="tab-content active" id="customer-search">
+                    <!-- Search interface -->
                     <div class="customer-search">
                         <input type="text" class="search-input" id="search-input" placeholder="Search by name, phone, or account number...">
                         <button class="btn btn-primary" onclick="searchCustomers()">
@@ -47,36 +50,9 @@
                         </button>
                     </div>
                     
+                    <!-- Dynamic customer results populated by crm-app.js -->
                     <div id="customer-results">
-                        <div class="customer-card" onclick="selectCustomer('1')">
-                            <div class="customer-name">John Smith</div>
-                            <div class="customer-info">
-                                <div><i class="fas fa-phone"></i> (555) 123-4567</div>
-                                <div><i class="fas fa-envelope"></i> john.smith@email.com</div>
-                                <div><i class="fas fa-credit-card"></i> ****1234</div>
-                                <div><i class="fas fa-calendar"></i> Member since 2020</div>
-                            </div>
-                        </div>
-
-                        <div class="customer-card" onclick="selectCustomer('2')">
-                            <div class="customer-name">Sarah Johnson</div>
-                            <div class="customer-info">
-                                <div><i class="fas fa-phone"></i> (555) 987-6543</div>
-                                <div><i class="fas fa-envelope"></i> sarah.j@email.com</div>
-                                <div><i class="fas fa-credit-card"></i> ****5678</div>
-                                <div><i class="fas fa-calendar"></i> Member since 2019</div>
-                            </div>
-                        </div>
-
-                        <div class="customer-card" onclick="selectCustomer('3')">
-                            <div class="customer-name">Michael Brown</div>
-                            <div class="customer-info">
-                                <div><i class="fas fa-phone"></i> (555) 456-7890</div>
-                                <div><i class="fas fa-envelope"></i> m.brown@email.com</div>
-                                <div><i class="fas fa-credit-card"></i> ****9012</div>
-                                <div><i class="fas fa-calendar"></i> Member since 2021</div>
-                            </div>
-                        </div>
+                        <!-- Customer cards will be dynamically populated by crm-app.js -->
                     </div>
                 </div>
 
@@ -219,6 +195,18 @@
                     </div>
                 </div>
 
+                <!-- Webex Contact Center Integration -->
+                <div class="section">
+                    <div class="section-header">
+                        <i class="fas fa-phone"></i>
+                        Webex Contact Center
+                    </div>
+                    <div class="section-content">
+                        <!-- Webex SDK component -->
+                        <wx1-sdk accesstoken="placeHolder"></wx1-sdk>
+                    </div>
+                </div>
+
                 <!-- Recent Activities -->
                 <div class="section">
                     <div class="section-header">
@@ -246,6 +234,10 @@
 
 
 
+    <!-- JavaScript modules for CRM functionality -->
+    <!-- Include the Webex SDK component -->
+    <script type="module" src="./wx1-sdk.ts"></script>
+    
     <!-- Include the CRM app.js file -->
     <script type="module" src="./crm-app.js"></script>
 </body>

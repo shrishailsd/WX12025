@@ -1,3 +1,9 @@
+/* 
+ * Banking CRM Application Styles
+ * Modern, responsive design for customer relationship management
+ */
+
+/* CSS Custom Properties for consistent theming */
 :root {
     --primary: #1e3c72;
     --primary-light: #2a5298;
@@ -12,6 +18,7 @@
     --gray-800: #2d3748;
 }
 
+/* Global reset and base styles */
 * {
     margin: 0;
     padding: 0;
@@ -25,6 +32,7 @@ body {
     line-height: 1.6;
 }
 
+/* Header styles */
 .header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: white;
@@ -35,6 +43,7 @@ body {
     z-index: 100;
 }
 
+/* Container for responsive layout */
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -85,6 +94,7 @@ body {
     50% { opacity: 0.5; }
 }
 
+/* Main layout grid */
 .main-content {
     display: grid;
     grid-template-columns: 1fr 400px;
@@ -93,6 +103,7 @@ body {
     min-height: calc(100vh - 80px);
 }
 
+/* Left panel - Customer management */
 .left-panel {
     background: white;
     border-radius: 12px;
