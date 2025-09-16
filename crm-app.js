@@ -112,7 +112,7 @@ function populateCustomerCards() {
         customerCard.innerHTML = `
             <div class="customer-name">${customer.firstName} ${customer.lastName}</div>
             <div class="customer-info">
-                <div><i class="fas fa-phone"></i> ${customer.phone}</div>
+                <div><i class="fas fa-phone"></i> <span onclick="dialPhone('${customer.phone}')" style="color: #007bff; cursor: pointer; text-decoration: underline;">${customer.phone}</span></div>
                 <div><i class="fas fa-envelope"></i> ${customer.email}</div>
                 <div><i class="fas fa-credit-card"></i> ****${customer.id}234</div>
                 <div><i class="fas fa-calendar"></i> Member since ${new Date(customer.memberSince).getFullYear()}</div>
@@ -302,6 +302,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+/**
+ * Dial a phone number using the Webex SDK
+ * @param {string} phoneNumber - Phone number to dial
+ */
+function dialPhone(phoneNumber) {
+    Logger.crm('CLICK-TO-DIAL', `Phone number clicked: ${phoneNumber}`);
+    
+    const wxSdk = document.querySelector('wx1-sdk');
+    if (wxSdk && wxSdk.placeClicktoDialcall) {
+        Logger.info('CLICK-TO-DIAL', 'Found wx1-sdk component, initiating call', { phoneNumber });
+        wxSdk.placeClicktoDialcall(phoneNumber);
+    } else {
+        Logger.error('CLICK-TO-DIAL', 'wx1-sdk component not found or method unavailable', { phoneNumber });
+    }
+}
+
 /* ================================
    GLOBAL EXPORTS FOR HTML INTEGRATION
    ================================ */
@@ -315,5 +331,6 @@ window.createCase = createCase;
 window.scheduleCallback = scheduleCallback;
 window.sendEmail = sendEmail;
 window.populateCustomerCards = populateCustomerCards;
+window.dialPhone = dialPhone;
 // Export customers data for access from Webex component
 window.customers = customers;

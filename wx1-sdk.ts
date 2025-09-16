@@ -53,10 +53,12 @@ export class Wx1Sdk extends LitElement {
     @state() tControls: any
     @state() cad: any
     @state() isMuted: boolean = false
+    @state() isOutboundCall: boolean = false // Track if current call is outbound
     
     // DOM references
     @query('#selectIdleCode') idleCode: any
     private webex: any;
+    private ringAudio: HTMLAudioElement;
     static styles = [
         css`
     :host {
@@ -229,6 +231,51 @@ export class Wx1Sdk extends LitElement {
         `
     ];
 
+    constructor() {
+        super();
+        // Initialize audio element for incoming call notifications
+        this.ringAudio = new Audio('./ringtone.wav');
+        this.ringAudio.loop = true;
+        this.ringAudio.volume = 0.7;
+        Logger.debug('AUDIO-INIT', 'Ring audio element initialized');
+    }
+
+    /**
+     * Play incoming call audio notification
+     */
+    playIncomingCallAudio() {
+        try {
+            Logger.debug('AUDIO-PLAY', 'Starting incoming call audio notification');
+            this.ringAudio.currentTime = 0; // Reset to beginning
+            const playPromise = this.ringAudio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    Logger.info('AUDIO-PLAY', 'Ring audio started successfully');
+                }).catch(error => {
+                    Logger.error('AUDIO-PLAY', 'Failed to play ring audio', error);
+                });
+            }
+        } catch (error) {
+            Logger.error('AUDIO-PLAY', 'Error playing incoming call audio', error);
+        }
+    }
+
+    /**
+     * Stop incoming call audio notification
+     */
+    stopIncomingCallAudio() {
+        try {
+            if (!this.ringAudio.paused) {
+                this.ringAudio.pause();
+                this.ringAudio.currentTime = 0;
+                Logger.debug('AUDIO-STOP', 'Ring audio stopped');
+            }
+        } catch (error) {
+            Logger.error('AUDIO-STOP', 'Error stopping incoming call audio', error);
+        }
+    }
+
 
     /**
      * Initialize Webex SDK connection with access token
@@ -277,8 +324,20 @@ export class Wx1Sdk extends LitElement {
             
             this.ani = this.task.data.interaction.callAssociatedDetails.ani
             Logger.debug('ANI-EXTRACT', 'Extracted ANI from task', { ani: this.ani });
-            // Call CRM app's searchCustomers function dynamically
-            this.callCrmSearch(this.ani);
+            
+            // Play incoming call audio notification
+            this.playIncomingCallAudio();
+            
+            // Check if this is an outbound call we initiated - skip CRM search for outbound calls
+            Logger.debug('OUTBOUND-FLAG', 'Checking isOutboundCall flag in task:incoming', { isOutboundCall: this.isOutboundCall });
+            
+            if (!this.isOutboundCall) {
+                // Only search CRM for inbound calls
+                Logger.info('CRM-SEARCH', 'Inbound call detected - performing CRM search');
+                this.callCrmSearch(this.ani);
+            } else {
+                Logger.info('CRM-SEARCH', 'Outbound call detected - skipping CRM search');
+            }
             
             // Check if browser login is selected to show answer/decline buttons
             const isBrowserLogin = this.agentLogin.loginOption === 'BROWSER';
@@ -301,6 +360,9 @@ export class Wx1Sdk extends LitElement {
             }
             this.task.once("task:end", (task: ITask) => {
                 Logger.webex('TASK-END', 'Task ended', { taskUuid: (task as any).uuid });
+                // Stop incoming call audio when task ends
+                this.stopIncomingCallAudio();
+                
                 // alert(`end ${JSON.stringify(task)}`)
                 this.tControls = html`<select @change=${(e: any) => this.handleWrapupSelection(e)}>
                     <option value="">Select wrap-up reason...</option>
@@ -322,10 +384,14 @@ export class Wx1Sdk extends LitElement {
 
             this.task.once("task:wrappedup", (task: ITask) => {
                 alert("wrapped up click ok")
+                // Stop incoming call audio when task is wrapped up
+                this.stopIncomingCallAudio();
+                
                 this.task = null
                 this.tControls = null
                 this.cad = null
                 this.isMuted = false // Reset mute state
+                this.isOutboundCall = false // Reset outbound call flag
             })
 
         })
@@ -340,6 +406,9 @@ export class Wx1Sdk extends LitElement {
         switch (action) {
             case "answer": {
                 try {
+                    // Stop incoming call audio
+                    this.stopIncomingCallAudio();
+                    
                     await this.task.accept(this.task.data.interactionId);
                     Logger.webex('TASK-ANSWER', 'Call answered successfully');
                     // Note: tControls will be updated by the task:assigned event listener
@@ -350,6 +419,9 @@ export class Wx1Sdk extends LitElement {
             }
             case "decline": {
                 try {
+                    // Stop incoming call audio
+                    this.stopIncomingCallAudio();
+                    
                     await this.task.decline(this.task.data.interactionId);
                     Logger.webex('TASK-DECLINE', 'Call declined successfully');
                     // Clear task and controls
@@ -357,12 +429,16 @@ export class Wx1Sdk extends LitElement {
                     this.tControls = null;
                     this.cad = null;
                     this.isMuted = false; // Reset mute state
+                    this.isOutboundCall = false; // Reset outbound call flag
                 } catch (error) {
                     Logger.error('TASK-DECLINE', 'Failed to decline call', error);
                 }
                 break
             }
             case "end": {
+                // Stop incoming call audio
+                this.stopIncomingCallAudio();
+                
                 this.task.end()
                 break
             }
@@ -443,9 +519,55 @@ export class Wx1Sdk extends LitElement {
     }
 
 
-    placeClicktoDialcall(phone: string) {
+    /**
+     * Place an outbound click-to-dial call to the specified phone number
+     * @param phone - Phone number to dial (E164 format recommended)
+     */
+    async placeClicktoDialcall(phone: string) {
         Logger.webex('CALL-DIAL', 'Placing click-to-dial call', { phone });
-        // Implement click-to-dial functionality here
+        
+        try {
+            // Validate that agent is logged in
+            if (!this.loggedIn || !this.webex) {
+                Logger.error('CALL-DIAL', 'Agent not logged in or Webex not initialized');
+                alert('Please login first before making calls');
+                return;
+            }
+
+            // Validate phone number
+            if (!phone || phone.trim() === '') {
+                Logger.error('CALL-DIAL', 'Invalid phone number provided');
+                alert('Invalid phone number provided');
+                return;
+            }
+
+            // Clean phone number (remove non-digits except +)
+            const cleanedPhone = phone.replace(/[^\d+]/g, '');
+            Logger.debug('CALL-DIAL', 'Cleaned phone number', { original: phone, cleaned: cleanedPhone });
+
+            // Check if agent is already on a call
+            if (this.task) {
+                Logger.warn('CALL-DIAL', 'Agent already has an active task');
+                alert('Cannot place outbound call - agent already has an active task');
+                return;
+            }
+
+            Logger.info('CALL-DIAL', 'Starting outbound call using startOutdial', { phoneNumber: cleanedPhone });
+            
+            // Set flag to indicate this will be an outbound call
+            this.isOutboundCall = true;
+            Logger.debug('OUTBOUND-FLAG', 'Set isOutboundCall flag to true before placing call', { isOutboundCall: this.isOutboundCall });
+            
+            // Use the Webex Contact Center SDK to start outbound call
+            await this.webex.cc.startOutdial(cleanedPhone); // E164 is an International Standard of Telephone numbers
+            
+            Logger.webex('CALL-DIAL', 'Outbound call initiated successfully', { phoneNumber: cleanedPhone });
+            alert(`Outbound call initiated to ${cleanedPhone}`);
+            
+        } catch (error) {
+            Logger.error('CALL-DIAL', 'Failed to place outbound call', error);
+            alert(`Failed to place call: ${error.message || 'Unknown error'}`);
+        }
     }
 
     /**
