@@ -310,7 +310,7 @@ export class Wx1Sdk extends LitElement {
         this.idleCodes = this.profile.idleCodes.filter((item: any) => !item.isSystem).map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
         this.wrapupCodes = this.profile.wrapupCodes.filter((item: any) => !item.isSystem).map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
         this.webex.cc.on("AgentStateChangeSuccess", (event: any) => {
-            // console.log(event)
+        Logger.debug('AGENT-STATE', 'AgentStateChangeSuccess event', event);
             this.idleCode.value = event.auxCodeId
         });
         this.webex.cc.on("task:incoming", (task: ITask) => {
@@ -377,7 +377,7 @@ export class Wx1Sdk extends LitElement {
                 this.updateCallControls();
             })
 
-            // Listen for media tracks (audio/video) for browser-based calls
+            // Listen for media tracks (audio) for browser-based calls
             this.task.on("task:media", (track: any) => {
                 this.handleTaskMedia(track);
             })
@@ -571,7 +571,7 @@ export class Wx1Sdk extends LitElement {
     }
 
     /**
-     * Handle media tracks (audio/video) for browser-based calls
+     * Handle media tracks (audio) for browser-based calls
      */
     handleTaskMedia(track: any) {
         Logger.webex('TASK-MEDIA', 'Media track received for active call', {
