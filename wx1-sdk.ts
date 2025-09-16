@@ -52,6 +52,7 @@ export class Wx1Sdk extends LitElement {
     @state() task: any
     @state() tControls: any
     @state() cad: any
+    @state() isMuted: boolean = false
     
     // DOM references
     @query('#selectIdleCode') idleCode: any
@@ -155,6 +156,17 @@ export class Wx1Sdk extends LitElement {
     button[onclick*="end"] {
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    }
+
+    /* Mute/Unmute buttons - using attribute selectors for action type */
+    button[onclick*="mute"] {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
+    }
+
+    button[onclick*="unmute"] {
+        background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+        box-shadow: 0 2px 8px rgba(253, 126, 20, 0.2);
     }
 
     p {
@@ -268,7 +280,25 @@ export class Wx1Sdk extends LitElement {
             // Call CRM app's searchCustomers function dynamically
             this.callCrmSearch(this.ani);
             
-            this.tControls = html`<button @click=${this.actionTask.bind(this, 'hold')}>Hold</button><button @click=${this.actionTask.bind(this, 'resume')}>Resume</button><button @click=${this.actionTask.bind(this, 'end')}>End</button>`
+            // Check if browser login is selected to show answer/decline buttons
+            const isBrowserLogin = this.agentLogin.loginOption === 'BROWSER';
+            Logger.debug('LOGIN-OPTION', 'Checking login option for task controls', { 
+                loginOption: this.agentLogin.loginOption, 
+                isBrowserLogin: isBrowserLogin 
+            });
+            
+            if (isBrowserLogin) {
+                // Show answer/decline buttons for browser login
+                this.tControls = html`
+                    <button @click=${this.actionTask.bind(this, 'answer')}>Answer</button>
+                    <button @click=${this.actionTask.bind(this, 'decline')}>Decline</button>
+                `
+                Logger.info('TASK-CONTROLS', 'Browser login detected - showing answer/decline buttons');
+            } else {
+                // For non-browser login (phone/desk phone), show incoming call message only
+                this.tControls = html`<p>📞 Incoming call from ${this.ani} - Please answer on your phone</p>`
+                Logger.info('TASK-CONTROLS', 'Non-browser login detected - showing incoming call message');
+            }
             this.task.once("task:end", (task: ITask) => {
                 Logger.webex('TASK-END', 'Task ended', { taskUuid: (task as any).uuid });
                 // alert(`end ${JSON.stringify(task)}`)
@@ -277,12 +307,25 @@ export class Wx1Sdk extends LitElement {
                     ${this.task.wrapupData.wrapUpProps.wrapUpReasonList.map((i:any)=>{return html`<option value=${i.id} data-name=${i.name}>${i.name}</option>`})}
                 </select>`
             })
-          
-            this.task.on("task:wrappedup", (task: ITask) => {
+
+            // Listen for when call is assigned/answered - this is when we show call controls
+            this.task.on("task:assigned", () => {
+                Logger.webex('TASK-ASSIGNED', 'Task assigned - call is now active');
+                // Show call control buttons based on login type
+                this.updateCallControls();
+            })
+
+            // Listen for media tracks (audio/video) for browser-based calls
+            this.task.on("task:media", (track: any) => {
+                this.handleTaskMedia(track);
+            })
+
+            this.task.once("task:wrappedup", (task: ITask) => {
                 alert("wrapped up click ok")
                 this.task = null
                 this.tControls = null
                 this.cad = null
+                this.isMuted = false // Reset mute state
             })
 
         })
@@ -295,6 +338,30 @@ export class Wx1Sdk extends LitElement {
     async actionTask(action: string, aux1:string, aux2:string) {
         Logger.webex('TASK-ACTION', `Task action triggered: ${action}`, { action, aux1, aux2 });
         switch (action) {
+            case "answer": {
+                try {
+                    await this.task.accept(this.task.data.interactionId);
+                    Logger.webex('TASK-ANSWER', 'Call answered successfully');
+                    // Note: tControls will be updated by the task:assigned event listener
+                } catch (error) {
+                    Logger.error('TASK-ANSWER', 'Failed to answer call', error);
+                }
+                break
+            }
+            case "decline": {
+                try {
+                    await this.task.decline(this.task.data.interactionId);
+                    Logger.webex('TASK-DECLINE', 'Call declined successfully');
+                    // Clear task and controls
+                    this.task = null;
+                    this.tControls = null;
+                    this.cad = null;
+                    this.isMuted = false; // Reset mute state
+                } catch (error) {
+                    Logger.error('TASK-DECLINE', 'Failed to decline call', error);
+                }
+                break
+            }
             case "end": {
                 this.task.end()
                 break
@@ -314,7 +381,97 @@ export class Wx1Sdk extends LitElement {
                 })
                 break
             }
+            case "mute": {
+                try {
+                    if (this.task) {
+                        await this.task.toggleMute();
+                        this.isMuted = true;
+                        Logger.webex('TASK-MUTE', 'Call muted successfully using SDK toggleMute');
+                        
+                        // Update controls to show current mute state
+                        this.updateCallControls();
+                    }
+                } catch (error) {
+                    Logger.error('TASK-MUTE', 'Failed to mute call', error);
+                }
+                break
+            }
+            case "unmute": {
+                try {
+                    if (this.task) {
+                        await this.task.toggleMute();
+                        this.isMuted = false;
+                        Logger.webex('TASK-UNMUTE', 'Call unmuted successfully using SDK toggleMute');
+                        
+                        // Update controls to show current mute state
+                        this.updateCallControls();
+                    }
+                } catch (error) {
+                    Logger.error('TASK-UNMUTE', 'Failed to unmute call', error);
+                }
+                break
+            }
         }
+    }
+
+    /**
+     * Update call control buttons based on login type and call state
+     */
+    updateCallControls() {
+        const isBrowserLogin = this.agentLogin.loginOption === 'BROWSER';
+        
+        if (isBrowserLogin) {
+            // Browser login: show all controls including mute/unmute
+            const muteButton = this.isMuted 
+                ? html`<button @click=${this.actionTask.bind(this, 'unmute')}>🔊 Unmute</button>`
+                : html`<button @click=${this.actionTask.bind(this, 'mute')}>🔇 Mute</button>`;
+                
+            this.tControls = html`
+                <button @click=${this.actionTask.bind(this, 'hold')}>Hold</button>
+                <button @click=${this.actionTask.bind(this, 'resume')}>Resume</button>
+                ${muteButton}
+                <button @click=${this.actionTask.bind(this, 'end')}>End</button>
+            `;
+        } else {
+            // Non-browser login: show basic controls only
+            this.tControls = html`
+                <button @click=${this.actionTask.bind(this, 'hold')}>Hold</button>
+                <button @click=${this.actionTask.bind(this, 'resume')}>Resume</button>
+                <button @click=${this.actionTask.bind(this, 'end')}>End</button>
+            `;
+        }
+    }
+
+
+    placeClicktoDialcall(phone: string) {
+        Logger.webex('CALL-DIAL', 'Placing click-to-dial call', { phone });
+        // Implement click-to-dial functionality here
+    }
+
+    /**
+     * Handle media tracks (audio/video) for browser-based calls
+     */
+    handleTaskMedia(track: any) {
+        Logger.webex('TASK-MEDIA', 'Media track received for active call', {
+            trackKind: track?.kind,
+            taskId: (this.task as any)?.uuid
+        });
+        
+        // Find or create remote audio element for playback
+        let remoteAudio = document.getElementById('remote-audio') as HTMLAudioElement;
+        if (!remoteAudio) {
+            // Create audio element if it doesn't exist
+            remoteAudio = document.createElement('audio');
+            remoteAudio.id = 'remote-audio';
+            remoteAudio.autoplay = true;
+            remoteAudio.style.display = 'none'; // Hidden audio element
+            document.body.appendChild(remoteAudio);
+            Logger.debug('TASK-MEDIA', 'Created remote audio element');
+        }
+        
+        // Set the media stream for audio playback
+        remoteAudio.srcObject = new MediaStream([track]);
+        Logger.info('TASK-MEDIA', 'Audio stream connected for call playback');
     }
 
     handleWrapupSelection(e: any) {
