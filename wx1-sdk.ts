@@ -745,7 +745,7 @@ export class Wx1Sdk extends LitElement {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.3);
             z-index: 1000;
             display: flex;
             justify-content: center;
@@ -768,7 +768,7 @@ export class Wx1Sdk extends LitElement {
         popup.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: #2c3e50;">📞 ${title}</h2>
-                <button onclick="this.closest('.popup-overlay').remove()" 
+                <button id="close-popup-btn"
                         style="background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer;">
                     ✕ Close
                 </button>
@@ -812,19 +812,38 @@ export class Wx1Sdk extends LitElement {
             customerName: customer.firstName + ' ' + customer.lastName 
         });
         
-        // Close popup when clicking overlay
+        // Function to close popup
+        const closePopup = () => {
+            if (overlay.parentNode) {
+                overlay.remove();
+                Logger.debug('CRM-POPUP', 'Customer popup closed');
+            }
+        };
+        
+        // Close button event listener
+        const closeBtn = popup.querySelector('#close-popup-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closePopup();
+            });
+        }
+        
+        // Close popup when clicking overlay (but not the popup content)
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                overlay.remove();
+                closePopup();
             }
+        });
+        
+        // Prevent popup content clicks from closing the modal
+        popup.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
         
         // Auto-close after 15 seconds
         setTimeout(() => {
-            if (overlay.parentNode) {
-                overlay.remove();
-                Logger.debug('CRM-POPUP', 'Customer popup auto-closed');
-            }
+            closePopup();
         }, 15000);
     }
 
