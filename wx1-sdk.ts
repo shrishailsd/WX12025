@@ -9,7 +9,7 @@ import Webex, { type ITask } from '@webex/contact-center'
 // Unique logging prefix for easy console filtering
 const LOG_PREFIX = '[WX1-SDK]';
 
-// Logging utility with unique keys for filtering - matches crm-app.js pattern
+// Logging utility with unique keys for filtering - matches crm-app.js pattern1
 const Logger = {
     info: (key: string, message: string, data: any = null) => {
         const timestamp = new Date().toISOString();
@@ -35,6 +35,7 @@ const Logger = {
 
 @customElement("wx1-sdk")
 export class Wx1Sdk extends LitElement {
+    @state() loggingIn: boolean = false;
     // Public properties
     @property({ reflect: true }) accesstoken = ""
     
@@ -238,6 +239,40 @@ export class Wx1Sdk extends LitElement {
         this.ringAudio.loop = true;
         this.ringAudio.volume = 0.7;
         Logger.debug('AUDIO-INIT', 'Ring audio element initialized');
+
+        // Minimal unload hooks with user prompt to allow async logout to start
+        window.addEventListener('beforeunload', this._handleBeforeUnload);
+        window.addEventListener('pagehide', this._handlePageHide);
+    }
+
+    // Attempt logout on refresh/close with clear logs
+    private _handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        if (this.loggedIn) {
+            Logger.info('UNLOAD', 'beforeunload: attempting stationLogout');
+            try { this.webex?.cc?.stationLogout({ logoutReason: 'Page closing' }); } catch (err) {
+                Logger.error('UNLOAD', 'beforeunload: stationLogout error', err);
+            }
+            // Show confirm dialog to give the SDK a moment to process
+            e.preventDefault();
+            e.returnValue = '';
+        } else {
+            Logger.debug('UNLOAD', 'beforeunload: not logged in, skipping logout');
+        }
+    }
+
+    private _handlePageHide = (ev: PageTransitionEvent) => {
+        Logger.info('UNLOAD', `pagehide: persisted=${ev?.persisted}`);
+        if (this.loggedIn) {
+            try { this.webex?.cc?.stationLogout({ logoutReason: 'Page hide' }); } catch (err) {
+                Logger.error('UNLOAD', 'pagehide: stationLogout error', err);
+            }
+        }
+    }
+
+    disconnectedCallback(): void {
+        window.removeEventListener('beforeunload', this._handleBeforeUnload);
+        window.removeEventListener('pagehide', this._handlePageHide);
+        super.disconnectedCallback();
     }
 
     /**
@@ -280,23 +315,26 @@ export class Wx1Sdk extends LitElement {
     /**
      * Initialize Webex SDK connection with access token
      */
-    startConnection() {
-        this.webex = new Webex({
-            credentials: {
-                access_token: this.accesstoken,
-                allowMultiLogin: true
-            }
-        });
-        new Promise((resolve) => {
-            this.webex.once('ready', async () => {
-                Logger.info('SDK-INIT', 'Webex SDK initialized with OAuth token');
-
-                this.profile = await this.webex.cc.register()
-                this.getOptions()
-                resolve;
+    async startConnection() {
+        this.loggingIn = true;
+        try {
+            this.webex = new Webex({
+                credentials: {
+                    access_token: this.accesstoken,
+                    allowMultiLogin: true
+                }
             });
-        });
-
+            await new Promise((resolve) => {
+                this.webex.once('ready', async () => {
+                    Logger.info('SDK-INIT', 'Webex SDK initialized with OAuth token');
+                    this.profile = await this.webex.cc.register()
+                    this.getOptions()
+                    resolve(null);
+                });
+            });
+        } finally {
+            this.loggingIn = false;
+        }
     }
 
     /**
@@ -562,7 +600,7 @@ export class Wx1Sdk extends LitElement {
             await this.webex.cc.startOutdial(cleanedPhone); // E164 is an International Standard of Telephone numbers
             
             Logger.webex('CALL-DIAL', 'Outbound call initiated successfully', { phoneNumber: cleanedPhone });
-            alert(`Outbound call initiated to ${cleanedPhone}`);
+            alert(`Outbound call initiated to ${cleanedPhone} - CLICK ANSWER`);
             
         } catch (error) {
             Logger.error('CALL-DIAL', 'Failed to place outbound call', error);
@@ -791,18 +829,61 @@ export class Wx1Sdk extends LitElement {
     }
 
     /**
-     * Login agent to Webex Contact Center station
+     * Login agent to Webex Contact Center station2
      */
     async stationLogin() {
-        this.webex.cc.on('agent:stationLoginSuccess', (eventData: any) => {
-            Logger.info('STATION-LOGIN', 'Station login successful via event', eventData);
-        })
-        this.station = await this.webex.cc.stationLogin(this.agentLogin)
-        this.loggedIn = true
-
+        this.loggingIn = true;
+        let hasRetried = false; // Track if we've already attempted a retry
+        
+        try {
+            Logger.info('STATION-LOGIN', 'Attempting station login', this.agentLogin);
+            this.webex.cc.on('agent:stationLoginSuccess', (eventData: any) => {
+                Logger.info('STATION-LOGIN', 'Station login successful via event', eventData);
+            })
+            this.station = await this.webex.cc.stationLogin(this.agentLogin)
+            this.loggedIn = true
+            Logger.info('STATION-LOGIN', 'Station login completed successfully');
+        } catch (error) {
+            Logger.error('STATION-LOGIN', 'Station login failed', error);
+            
+            // Check if error is AGENT_SESSION_ALREADY_EXISTS and retry once (only if not already retried)
+            if (!hasRetried && error && (error.message?.includes('AGENT_SESSION_ALREADY_EXISTS') || 
+                         error.code === 'AGENT_SESSION_ALREADY_EXISTS' ||
+                         String(error).includes('AGENT_SESSION_ALREADY_EXISTS'))) {
+                Logger.warn('STATION-LOGIN', 'Agent session already exists - attempting logout and retry (first attempt)');
+                hasRetried = true; // Mark that we're about to retry
+                
+                try {
+                    // Call stationLogout to clear existing session
+                    await this.webex.cc.stationLogout({ logoutReason: 'Clearing existing session' });
+                    Logger.info('STATION-LOGIN', 'Successfully logged out existing session');
+                    
+                    // Wait a moment for cleanup
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Retry station login directly (no recursion)
+                    Logger.info('STATION-LOGIN', 'Retrying station login after clearing existing session');
+                    this.station = await this.webex.cc.stationLogin(this.agentLogin);
+                    this.loggedIn = true;
+                    Logger.info('STATION-LOGIN', 'Station login retry completed successfully');
+                    return; // Exit successfully on retry
+                } catch (retryError) {
+                    Logger.error('STATION-LOGIN', 'Station login retry failed after logout', retryError);
+                    this.loggedIn = false;
+                    throw retryError; // Re-throw retry error
+                }
+            } else if (hasRetried && error && (error.message?.includes('AGENT_SESSION_ALREADY_EXISTS') || 
+                      error.code === 'AGENT_SESSION_ALREADY_EXISTS' ||
+                      String(error).includes('AGENT_SESSION_ALREADY_EXISTS'))) {
+                Logger.error('STATION-LOGIN', 'Agent session still exists after retry - giving up');
+            }
+            
+            this.loggedIn = false;
+            throw error; // Re-throw original error
+        } finally {
+            this.loggingIn = false;
+        }
         // start listeners here
-
-
     }
     /**
      * Logout agent and cleanup session
@@ -850,9 +931,10 @@ export class Wx1Sdk extends LitElement {
         
         <!--  Implement choose here -->
         <!-- Login -->
-        ${!this.profile ? html`
-        <label>Access Token: </label><input @change=${(e: any) => this.accesstoken = e.target.value} id="token" aria-label="Token"><br>
-        <button @click=${this.startConnection}>start</button>` : html``}
+    ${!this.profile ? html`
+    <label>Access Token: </label><input @change=${(e: any) => this.accesstoken = e.target.value} id="token" aria-label="Token"><br>
+    <button @click=${this.startConnection} ?disabled=${this.loggingIn}>Login</button>
+    ${this.loggingIn ? html`<span style="color:#0078d4;font-weight:500;">Logging in...</span>` : ''}` : html``}
 
        <!-- select station options -->
        ${this.profile && !this.loggedIn ? html`<p>Welcome ${this.profile.agentName}</p>
@@ -867,7 +949,8 @@ export class Wx1Sdk extends LitElement {
                 ${this.teams}
             </select><br>
             ${this.agentLogin.loginOption != 'BROWSER' ? html`<label>${this.agentLogin.loginOption}: </label><input @change=${(e: any) => this.agentLogin.dialNumber = e.target.value}><br>` : html``}
-            <button @click=${this.stationLogin}>Login</button>
+            <button @click=${this.stationLogin} ?disabled=${this.loggingIn}>Station Login</button>
+            ${this.loggingIn ? html`<span style="color:#0078d4;font-weight:500;">Logging in...</span>` : ''}
             `: html``}
 
             <!-- logged in  -->
