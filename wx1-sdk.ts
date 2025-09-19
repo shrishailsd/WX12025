@@ -313,7 +313,7 @@ export class Wx1Sdk extends LitElement {
 
 
     /**
-     * Initialize Webex SDK connection with access token
+     * Initialize Webex SDK connection with access tokenq
      */
     async startConnection() {
         this.loggingIn = true;
@@ -321,13 +321,17 @@ export class Wx1Sdk extends LitElement {
             this.webex = new Webex({
                 credentials: {
                     access_token: this.accesstoken,
-                    allowMultiLogin: true
-                }
+                },
             });
             await new Promise((resolve) => {
                 this.webex.once('ready', async () => {
                     Logger.info('SDK-INIT', 'Webex SDK initialized with OAuth token');
                     this.profile = await this.webex.cc.register()
+                    Logger.debug('AGENT-LOGIN-STATUS', 'Agent login status check', { isAgentLoggedIn: this.profile.isAgentLoggedIn });
+                    if (this.profile.isAgentLoggedIn) {
+                        Logger.debug('AGENT-LOGIN', 'Agent already logged in from previous session - restoring state');
+                        this.loggedIn = true;
+                    }
                     this.getOptions()
                     resolve(null);
                 });
@@ -341,16 +345,22 @@ export class Wx1Sdk extends LitElement {
      * Setup agent options and event listeners after registration
      */
     getOptions() {
-        // console.log(JSON.stringify(this.profile))
+        
         this.voiceOptions = this.profile.loginVoiceOptions.map((item: any) => html`<option value=${item}>${item}</option>`)
         this.teams = this.profile.teams.map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
         this.agentName = this.profile.agentName
         this.idleCodes = this.profile.idleCodes.filter((item: any) => !item.isSystem).map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
         this.wrapupCodes = this.profile.wrapupCodes.filter((item: any) => !item.isSystem).map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
+       
         this.webex.cc.on("AgentStateChangeSuccess", (event: any) => {
-        Logger.debug('AGENT-STATE', 'AgentStateChangeSuccess event', event);
-            this.idleCode.value = event.auxCodeId
+            Logger.debug('AGENT-STATE', 'AgentStateChangeSuccess event', event);
+            if (this.idleCode) {
+                this.idleCode.value = event.auxCodeId;
+            } else {
+                Logger.warn('AGENT-STATE', 'IdleCode element not available, skipping value update', { auxCodeId: event.auxCodeId });
+            }
         });
+
         this.webex.cc.on("task:incoming", (task: ITask) => {
 
             Logger.webex('TASK-INCOMING', 'New incoming task received', { 
@@ -848,11 +858,10 @@ export class Wx1Sdk extends LitElement {
     }
 
     /**
-     * Login agent to Webex Contact Center station2
+     * Login agent to Webex Contact Center station
      */
     async stationLogin() {
         this.loggingIn = true;
-        let hasRetried = false; // Track if we've already attempted a retry
         
         try {
             Logger.info('STATION-LOGIN', 'Attempting station login', this.agentLogin);
@@ -864,45 +873,11 @@ export class Wx1Sdk extends LitElement {
             Logger.info('STATION-LOGIN', 'Station login completed successfully');
         } catch (error) {
             Logger.error('STATION-LOGIN', 'Station login failed', error);
-            
-            // Check if error is AGENT_SESSION_ALREADY_EXISTS and retry once (only if not already retried)
-            if (!hasRetried && error && (error.message?.includes('AGENT_SESSION_ALREADY_EXISTS') || 
-                         error.code === 'AGENT_SESSION_ALREADY_EXISTS' ||
-                         String(error).includes('AGENT_SESSION_ALREADY_EXISTS'))) {
-                Logger.warn('STATION-LOGIN', 'Agent session already exists - attempting logout and retry (first attempt)');
-                hasRetried = true; // Mark that we're about to retry
-                
-                try {
-                    // Call stationLogout to clear existing session
-                    await this.webex.cc.stationLogout({ logoutReason: 'Clearing existing session' });
-                    Logger.info('STATION-LOGIN', 'Successfully logged out existing session');
-                    
-                    // Wait a moment for cleanup
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Retry station login directly (no recursion)
-                    Logger.info('STATION-LOGIN', 'Retrying station login after clearing existing session');
-                    this.station = await this.webex.cc.stationLogin(this.agentLogin);
-                    this.loggedIn = true;
-                    Logger.info('STATION-LOGIN', 'Station login retry completed successfully');
-                    return; // Exit successfully on retry
-                } catch (retryError) {
-                    Logger.error('STATION-LOGIN', 'Station login retry failed after logout', retryError);
-                    this.loggedIn = false;
-                    throw retryError; // Re-throw retry error
-                }
-            } else if (hasRetried && error && (error.message?.includes('AGENT_SESSION_ALREADY_EXISTS') || 
-                      error.code === 'AGENT_SESSION_ALREADY_EXISTS' ||
-                      String(error).includes('AGENT_SESSION_ALREADY_EXISTS'))) {
-                Logger.error('STATION-LOGIN', 'Agent session still exists after retry - giving up');
-            }
-            
             this.loggedIn = false;
-            throw error; // Re-throw original error
+            throw error; // Re-throw error for caller to handle
         } finally {
             this.loggingIn = false;
         }
-        // start listeners here
     }
     /**
      * Logout agent and cleanup session
@@ -923,25 +898,42 @@ export class Wx1Sdk extends LitElement {
      * Change agent availability status (Available/Idle)
      */
     async changeStatus(e: any) {
-        let targetState
-        if (e.target.value != "0") { targetState = "Idle" } else { targetState = "Available" }
         try {
+            // Validate event and target
+            if (!e || !e.target) {
+                Logger.error('AGENT-STATE', 'Invalid event object - missing target', { event: e });
+                return;
+            }
+
+            const auxCodeId = e.target.value;
+            if (auxCodeId === undefined || auxCodeId === null) {
+                Logger.error('AGENT-STATE', 'Invalid auxCodeId value', { auxCodeId });
+                return;
+            }
+
+            let targetState = auxCodeId !== "0" ? "Idle" : "Available";
+            
+            Logger.debug('AGENT-STATE', 'Attempting to change agent state', { 
+                targetState, 
+                auxCodeId 
+            });
+
             const response = await this.webex.cc.setAgentState({
-                state: targetState,          // e.g., "Idle"
-                auxCodeId: e.target.value,//targetAuxCodeId,    // e.g., "auxCodeIdForLunch"
+                state: targetState,
+                auxCodeId: auxCodeId,
                 lastStateChangeReason: 'User Initiated'
             });
+            
             Logger.info('AGENT-STATE', 'State set successfully', { 
                 targetState, 
-                auxCodeId: e.target.value 
+                auxCodeId 
             });
-            // The agent's state is now updated on the backend.
+            
             return response;
         } catch (error) {
             Logger.error('AGENT-STATE', 'Failed to set state', error);
             throw error;
         }
-
     }
     render() {
         return html`
