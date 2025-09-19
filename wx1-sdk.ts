@@ -1,5 +1,5 @@
 /**
- * Webex Contact Center SDK Component1
+ * Webex Contact Center SDK Component
  * LitElement-based web component for Webex CC agent functionality
  */
 import { LitElement, html, css } from "lit";
