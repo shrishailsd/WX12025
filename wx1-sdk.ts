@@ -408,7 +408,7 @@ export class Wx1Sdk extends LitElement {
             }
             this.task.once("task:end", (task: ITask) => {
                 Logger.webex('TASK-END', 'Task ended', { taskUuid: (task as any).uuid });
-               
+                this.stopIncomingCallAudio();
                 this.tControls = html`<select @change=${(e: any) => this.handleWrapupSelection(e)}>
                     <option value="">Select wrap-up reason...</option>
                     ${this.task.wrapupData.wrapUpProps.wrapUpReasonList.map((i:any)=>{return html`<option value=${i.id} data-name=${i.name}>${i.name}</option>`})}
@@ -419,13 +419,15 @@ export class Wx1Sdk extends LitElement {
             this.task.on("task:assigned", () => {
                 Logger.webex('TASK-ASSIGNED', 'Task assigned - call is now active');
                 // Show call control buttons based on login type
-                // Stop incoming call audio when task ends
+                // Stop incoming call audio when task ends (For non webRTC calls)
                 this.stopIncomingCallAudio();
+                Logger.debug('update-controls', 'Updating call controls on task assigned');
                 this.updateCallControls();
             })
 
             // Listen for media tracks (audio) for browser-based calls
             this.task.on("task:media", (track: any) => {
+                Logger.webex('TASK-MEDIA', 'Media track received', { track });
                 this.handleTaskMedia(track);
             })
 
