@@ -314,7 +314,7 @@ export class Wx1Sdk extends LitElement {
 
 
     /**
-     * Initialize Webex SDK connection with access tokenq
+     * Initialize Webex SDK connection with access token [SHOW 1]
      */
     async startConnection() {
         this.loggingIn = true;
@@ -343,7 +343,7 @@ export class Wx1Sdk extends LitElement {
     }
 
     /**
-     * Setup agent options and event listeners after registration
+     * Setup agent options and event listeners after registration [show 2]
      */
     getOptions() {
         
@@ -362,6 +362,7 @@ export class Wx1Sdk extends LitElement {
             }
         });
 
+        // Agent receives incoming call.
         this.webex.cc.on("task:incoming", (task: ITask) => {
 
             Logger.webex('TASK-INCOMING', 'New incoming task received', { 
@@ -369,8 +370,9 @@ export class Wx1Sdk extends LitElement {
                 ani: (task.data as any)?.interaction?.callAssociatedDetails?.ani 
             });
             this.task = task
+            // Extract and display Call Associated Details (CAD)
             this.cad = Object.entries(this.task.data.interaction.callAssociatedDetails).map(([key, value]) => { return html`<p>${key}: ${value}</p>` })
-            
+            // Extract ANI from task data
             this.ani = this.task.data.interaction.callAssociatedDetails.ani
             Logger.debug('ANI-EXTRACT', 'Extracted ANI from task', { ani: this.ani });
             
@@ -449,7 +451,7 @@ export class Wx1Sdk extends LitElement {
     }
 
     /**
-     * Handle task actions (hold, resume, end, wrapup)
+     * Handle task actions (hold, resume, end, wrapup) [show 3]
      */
     async actionTask(action: string, aux1:string, aux2:string) {
         Logger.webex('TASK-ACTION', `Task action triggered: ${action}`, { action, aux1, aux2 });
@@ -570,7 +572,7 @@ export class Wx1Sdk extends LitElement {
 
 
     /**
-     * Place an outbound click-to-dial call to the specified phone number
+     * Place an outbound click-to-dial call to the specified phone number [show 4]
      * @param phone - Phone number to dial (E164 format recommended)
      */
     async placeClicktoDialcall(phone: string) {
