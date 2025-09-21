@@ -5,6 +5,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js"
 import Webex, { type ITask } from '@webex/contact-center'
+import ringtoneUrl from './ringtone.wav'
 
 // Unique logging prefix for easy console filtering
 const LOG_PREFIX = '[WX1-SDK]';
@@ -235,7 +236,7 @@ export class Wx1Sdk extends LitElement {
     constructor() {
         super();
         // Initialize audio element for incoming call notifications
-        this.ringAudio = new Audio('./ringtone.wav');
+        this.ringAudio = new Audio(ringtoneUrl);
         this.ringAudio.loop = true;
         this.ringAudio.volume = 0.7;
         Logger.debug('AUDIO-INIT', 'Ring audio element initialized');
