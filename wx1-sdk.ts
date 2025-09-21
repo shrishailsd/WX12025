@@ -936,49 +936,49 @@ export class Wx1Sdk extends LitElement {
             throw error;
         }
     }
+
+
+    /* main landing page for the whole UI operations */
     render() {
         return html`
-      <div>
+            <div>
+                <!-- Login -->
+                ${!this.profile ? html`
+                    <label>Access Token: </label><input @change=${(e: any) => this.accesstoken = e.target.value} id="token" aria-label="Token"><br>
+                    <button @click=${this.startConnection} ?disabled=${this.loggingIn}>Login</button>
+                    ${this.loggingIn ? html`<span style="color:#0078d4;font-weight:500;">Logging in...</span>` : ''}
+                ` : html``}
 
-        
-        <!--  Implement choose here -->
-        <!-- Login -->
-    ${!this.profile ? html`
-    <label>Access Token: </label><input @change=${(e: any) => this.accesstoken = e.target.value} id="token" aria-label="Token"><br>
-    <button @click=${this.startConnection} ?disabled=${this.loggingIn}>Login</button>
-    ${this.loggingIn ? html`<span style="color:#0078d4;font-weight:500;">Logging in...</span>` : ''}` : html``}
+                <!-- select station options -->
+                ${this.profile && !this.loggedIn ? html`
+                    <p>Welcome ${this.profile.agentName}</p>
+                    <label>Handle calls using</label>
+                    <select @change=${(e: any) => this.agentLogin = { ...this.agentLogin, loginOption: e.target.selectedOptions[0].value }} id="selectVoiceOption">
+                        <option></option>
+                        ${this.voiceOptions}
+                    </select><br>
+                    <label>Your team</label>
+                    <select @change=${(e: any) => this.agentLogin.teamId = e.target.selectedOptions[0].value} id="selectTeam">
+                        <option></option>
+                        ${this.teams}
+                    </select><br>
+                    ${this.agentLogin.loginOption != 'BROWSER' ? html`<label>${this.agentLogin.loginOption}: </label><input @change=${(e: any) => this.agentLogin.dialNumber = e.target.value}><br>` : html``}
+                    <button @click=${this.stationLogin} ?disabled=${this.loggingIn}>Station Login</button>
+                    ${this.loggingIn ? html`<span style="color:#0078d4;font-weight:500;">Logging in...</span>` : ''}
+                ` : html``}
 
-       <!-- select station options -->
-       ${this.profile && !this.loggedIn ? html`<p>Welcome ${this.profile.agentName}</p>
-            <label>Handle calls using</label>
-            <select @change=${(e: any) => this.agentLogin = { ...this.agentLogin, loginOption: e.target.selectedOptions[0].value }} id="selectVoiceOption">
-                <option></option>
-                ${this.voiceOptions}
-            </select><br>
-            <label>Your team</label>
-            <select @change=${(e: any) => this.agentLogin.teamId = e.target.selectedOptions[0].value} id="selectTeam">
-                <option></option>
-                ${this.teams}
-            </select><br>
-            ${this.agentLogin.loginOption != 'BROWSER' ? html`<label>${this.agentLogin.loginOption}: </label><input @change=${(e: any) => this.agentLogin.dialNumber = e.target.value}><br>` : html``}
-            <button @click=${this.stationLogin} ?disabled=${this.loggingIn}>Station Login</button>
-            ${this.loggingIn ? html`<span style="color:#0078d4;font-weight:500;">Logging in...</span>` : ''}
-            `: html``}
-
-            <!-- logged in  -->
-           ${this.loggedIn ? html`
-            <p>Logged in as: <strong>${this.agentName}</strong></p>
-            <button @click=${this.stationLogout}>Logout</button>
-            <select id="selectIdleCode" @change=${this.changeStatus}>
-            ${this.idleCodes}
-            </select>
-            ${this.cad}<br>
-            ${this.tControls}
-            ` : html``} 
-
-
-        </div>
-            `;
+                <!-- logged in  -->
+                ${this.loggedIn ? html`
+                    <p>Logged in as: <strong>${this.agentName}</strong></p>
+                    <button @click=${this.stationLogout}>Logout</button>
+                    <select id="selectIdleCode" @change=${this.changeStatus}>
+                        ${this.idleCodes}
+                    </select>
+                    ${this.cad}<br>
+                    ${this.tControls}
+                ` : html``}
+            </div>
+        `;
     }
 }
 
