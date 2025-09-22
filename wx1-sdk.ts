@@ -410,14 +410,22 @@ export class Wx1Sdk extends LitElement {
                 Logger.info('TASK-CONTROLS', 'Non-browser login detected - showing incoming call message');
             }
             this.task.once("task:end", (task: ITask) => {
-                Logger.webex('TASK-END', 'Task ended', { taskUuid: (task as any).uuid });
                 this.stopIncomingCallAudio();
+                Logger.webex('TASK-END', 'Task ended', { taskUuid: (task as any).uuid });
+                // Show wrap-up dropdown if required
+                if(task.data.wrapUpRequired){
+                      this.stopIncomingCallAudio();
                 this.tControls = html`<select @change=${(e: any) => this.handleWrapupSelection(e)}>
                     <option value="">Select wrap-up reason...</option>
                     ${this.task.wrapupData.wrapUpProps.wrapUpReasonList.map((i:any)=>{return html`<option value=${i.id} data-name=${i.name}>${i.name}</option>`})}
                 </select>`
+                } else {
+                    this.loggedIn = true;
+                }
+                // if empty redirect to wrapup screen
+              
             })
-
+            
             // Listen for when call is assigned/answered - this is when we show call controls
             this.task.on("task:assigned", () => {
                 Logger.webex('TASK-ASSIGNED', 'Task assigned - call is now active');
@@ -434,8 +442,18 @@ export class Wx1Sdk extends LitElement {
                 this.handleTaskMedia(track);
             })
 
-            this.task.once("task:wrappedup", (task: ITask) => {
-                alert("wrapped up click ok")
+            // This is a workaround untill task supports outbound events
+            this.webex.cc.once("AgentOutboundFailed", (event: any) => {
+                Logger.error('OUTBOUND-FAILED', 'AgentOutboundFailed event received', event);
+                this.stopIncomingCallAudio();
+                this.tControls = html`<select @change=${(e: any) => this.handleWrapupSelection(e)}>
+                    <option value="">Select wrap-up reason...</option>
+                    ${this.task.wrapupData.wrapUpProps.wrapUpReasonList.map((i:any)=>{return html`<option value=${i.id} data-name=${i.name}>${i.name}</option>`})}
+                </select>`
+
+                this.webex.cc.once("AgentWrappedUp", (event: any) => {
+                    Logger.webex('WRAPUP-COMPLETE', 'wrappedup event received after outbound failure', event);
+                    alert("wrapped up from outdial click ok")
                 // Stop incoming call audio when task is wrapped up
                 this.stopIncomingCallAudio();
                 
@@ -444,6 +462,21 @@ export class Wx1Sdk extends LitElement {
                 this.cad = null
                 this.isMuted = false // Reset mute state
                 this.isOutboundCall = false // Reset outbound call flag
+                this.webex.cc.off("AgentWrappedUp");
+                this.webex.cc.off("AgentOutboundFailed");
+                });
+            });
+
+            this.task.once("task:wrappedup", (task: ITask) => {
+                alert("wrapped up click ok")
+                // Stop incoming call audio when task is wrapped up
+                this.stopIncomingCallAudio();
+                this.task = null
+                this.tControls = null
+                this.cad = null
+                this.isMuted = false // Reset mute state
+                this.isOutboundCall = false // Reset outbound call flag
+                
             })
 
         })
@@ -891,8 +924,10 @@ export class Wx1Sdk extends LitElement {
             await this.webex.cc.stationLogout({ logoutReason: 'End of shift' })
             Logger.info('STATION-LOGOUT', 'Logged out successfully');
             this.loggedIn = false
-            await this.webex.cc.deregister()
+           // await this.webex.cc.deregister()
             this.profile = null
+            this.webex.cc.off("AgentWrappedUp");
+            this.webex.cc.off("AgentOutboundFailed");
         } catch (error) {
             Logger.error('STATION-LOGOUT', 'Logout failed', error);
         }
