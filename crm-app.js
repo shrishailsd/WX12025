@@ -2,6 +2,7 @@
  * Banking CRM Application - Main JavaScript Module
  * Handles customer management, search, and CRM functionality
  * Integrates with Webex Contact Center for call handling
+ * Pass the phone number for outdial functionality
  */
 
 // Unique logging prefix for easy console filtering
@@ -304,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /**
  * Dial a phone number using the Webex SDK
- * @param {string} phoneNumber - Phone number to dial
+ * @param {string} phoneNumber - Phone number to dial [show 1]
  */
 function dialPhone(phoneNumber) {
     Logger.crm('CLICK-TO-DIAL', `Phone number clicked: ${phoneNumber}`);
