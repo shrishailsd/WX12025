@@ -353,7 +353,7 @@ export class Wx1Sdk extends LitElement {
         this.idleCodes = this.profile.idleCodes.filter((item: any) => !item.isSystem).map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
         this.wrapupCodes = this.profile.wrapupCodes.filter((item: any) => !item.isSystem).map((item: any) => html`<option value=${item.id}>${item.name}</option>`)
        
-        this.webex.cc.on("AgentStateChangeSuccess", (event: any) => {
+        this.webex.cc.on("agent:stateChangeSuccess", (event: any) => {
             Logger.debug('AGENT-STATE', 'AgentStateChangeSuccess event', event);
             if (this.idleCode) {
                 this.idleCode.value = event.auxCodeId;
